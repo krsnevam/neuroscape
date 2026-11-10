@@ -6,7 +6,7 @@ import { worlds } from '../../data/worlds'
 import { useAppStore } from '../../store/useAppStore'
 import FpsMeter from '../FpsMeter'
 
-type LearnTab = 'picture' | 'industry' | 'theory' | 'complexity' | 'words'
+type LearnTab = 'picture' | 'theory' | 'complexity' | 'words'
 
 export type StepActions = Partial<Record<StepKind, { label: string; run: () => void }>>
 
@@ -22,7 +22,7 @@ const stepTone: Record<StepKind, string> = {
 /**
  * Frame shared by every station: the live scene on the left (top on phones), and on the
  * right the story, a live "what is happening" commentary, the Explore / Break / Fix / Prove
- * mission, the Picture / Industry / Theory / Complexity / Words tabs and the station's controls.
+ * mission, an expandable industry case, the Picture / Theory / Complexity / Words tabs and the station's controls.
  *
  * `happening` is the commentary: one to three short sentences, recomputed on every render from
  * the station's live state, that tell a first-time learner what the network is doing right now
@@ -48,6 +48,7 @@ export default function LabShell({
   const [stepIdx, setStepIdx] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
   const [learn, setLearn] = useState<LearnTab | null>(lab.picture?.length ? 'picture' : null)
+  const [showIndustry, setShowIndustry] = useState(false)
   const markLabDone = useAppStore((s) => s.markLabDone)
   const step = lab.steps[stepIdx]
   const action = actions[step.kind]
@@ -86,16 +87,40 @@ export default function LabShell({
               </p>
             )}
             {lab.industry && (
-              <button
-                type="button"
-                onClick={() => setLearn('industry')}
-                className="flex items-start gap-2 rounded-md border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-2 text-left text-xs leading-snug text-emerald-100 hover:bg-emerald-400/15"
-              >
-                <span className="mt-0.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-emerald-300">In industry</span>
-                <span>
-                  {lab.industry.setting}. <span className="text-emerald-300 underline">See how</span>
-                </span>
-              </button>
+              <div className="rounded-md border border-emerald-400/25 bg-emerald-400/10">
+                <button
+                  type="button"
+                  aria-expanded={showIndustry}
+                  onClick={() => setShowIndustry((v) => !v)}
+                  className="flex w-full items-start gap-2 rounded-md px-2.5 py-2 text-left text-xs leading-snug text-emerald-100 hover:bg-emerald-400/15"
+                >
+                  <span className="mt-0.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-emerald-300">In industry</span>
+                  <span className="min-w-0 flex-1">
+                    {lab.industry.setting}.{' '}
+                    <span className="whitespace-nowrap text-emerald-300 underline">{showIndustry ? 'Hide' : 'See how'}</span>
+                  </span>
+                  <span className="shrink-0 text-emerald-300" aria-hidden>
+                    {showIndustry ? '−' : '+'}
+                  </span>
+                </button>
+                {showIndustry && (
+                  <div className="flex flex-col gap-2.5 border-t border-emerald-400/20 px-2.5 pb-3 pt-2.5 text-[13px] leading-snug">
+                    {(
+                      [
+                        ['The problem', lab.industry.problem],
+                        ['How this idea is used', lab.industry.howUsed],
+                        ['How it goes wrong', lab.industry.goesWrong],
+                        ['Who does this work', lab.industry.roles],
+                      ] as const
+                    ).map(([k, v]) => (
+                      <div key={k}>
+                        <h4 className="mb-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-emerald-300/80">{k}</h4>
+                        <p className="text-slate-100">{v}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
             {lab.equation && (
               <p className="rounded-md bg-white/5 px-2.5 py-1.5 font-mono text-xs leading-relaxed text-sky-200">{lab.equation}</p>
@@ -156,13 +181,12 @@ export default function LabShell({
                   I have my answer. Show the model answer
                 </button>
               ))}
-            {(lab.picture?.length || lab.industry || lab.theory || lab.complexity || lab.words?.length) && (
+            {(lab.picture?.length || lab.theory || lab.complexity || lab.words?.length) && (
               <div className="rounded-md bg-white/5">
                 <div className="flex flex-wrap gap-1 p-1" role="tablist" aria-label="Learn more">
                   {(
                     [
                       ['picture', 'Picture', lab.picture?.length],
-                      ['industry', 'Industry', lab.industry],
                       ['theory', 'Theory', lab.theory],
                       ['complexity', 'Complexity', lab.complexity],
                       ['words', 'Words', lab.words?.length],
@@ -197,24 +221,6 @@ export default function LabShell({
                         <span>
                           <b className="font-semibold text-slate-100">{k.mark}:</b> <span className="text-slate-300">{k.meaning}</span>
                         </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {learn === 'industry' && lab.industry && (
-                  <div className="flex flex-col gap-2.5 px-2.5 pb-3 pt-1 text-[13px] leading-snug">
-                    {(
-                      [
-                        ['Where', lab.industry.setting],
-                        ['The problem', lab.industry.problem],
-                        ['How this idea is used', lab.industry.howUsed],
-                        ['How it goes wrong', lab.industry.goesWrong],
-                        ['Who does this work', lab.industry.roles],
-                      ] as const
-                    ).map(([k, v]) => (
-                      <div key={k}>
-                        <h4 className={learnHead}>{k}</h4>
-                        <p className="text-slate-200">{v}</p>
                       </div>
                     ))}
                   </div>
