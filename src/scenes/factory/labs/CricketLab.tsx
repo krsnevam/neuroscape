@@ -181,6 +181,23 @@ export default function CricketLab() {
   return (
     <LabShell
       labId="cricket"
+      happening={
+        <>
+          <p>
+            Each dot is one finished match: green on the top plane if it was won (target 1), red on the floor if lost (target 0).{' '}
+            {sim.data.length} matches so far.
+          </p>
+          <p>
+            The surface is the network's output. It cannot pass through both a win and a loss at the same spot, so it settles at their average,
+            which is the chance of winning.
+          </p>
+          <p>
+            Need {runs} from {ballsLeft}: it says {(p * 100).toFixed(0)}%.
+            {sim.data.length < 120 ? ' With this few matches the surface is a rough guess.' : ''}
+            {truth !== null ? ` 2000 fresh simulations say ${(truth * 100).toFixed(0)}%.` : ''}
+          </p>
+        </>
+      }
       actions={{
         break: {
           label: 'Clear and train on 15 matches',

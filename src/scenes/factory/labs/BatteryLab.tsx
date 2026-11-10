@@ -30,7 +30,7 @@ const toSample = (r: Reading): Sample => ({ p: [r.h / 6 - 1], t: [r.pct / 50 - 1
 
 export default function BatteryLab() {
   const [readings, setReadings] = useState<Reading[]>(starter)
-  const [S, setS] = useState(4)
+  const [S, setS] = useState(2)
   const [useVal, setUseVal] = useState(true)
   const [earlyStop, setEarlyStop] = useState(false)
   const [decayIdx, setDecayIdx] = useState(0)
@@ -168,6 +168,26 @@ export default function BatteryLab() {
   return (
     <LabShell
       labId="battery"
+      happening={
+        <>
+          <p>
+            The yellow curve is a 1-{S}-1 network after {sim.its} training steps. Blue readings train it
+            {sim.val.length ? '; amber readings are held back and only test it.' : '.'}
+          </p>
+          <p>
+            {diagnosis === 'Overfitting'
+              ? `Training error ${tr.toFixed(1)}% is far below validation error ${va.toFixed(1)}%: it is memorising the blue readings, noise included, and wiggling between them.`
+              : diagnosis === 'Underfitting'
+                ? `Even the training error is ${tr.toFixed(1)}%: this network has too few neurons to follow the readings.`
+                : sim.val.length
+                  ? `Training and validation errors are close (${tr.toFixed(1)}% and ${va.toFixed(1)}%), so the curve can be trusted between readings.`
+                  : `Training error is ${tr.toFixed(1)}%. With no validation set there is nothing to tell you whether it is memorising.`}
+          </p>
+          <p>
+            Right of {lastH.toFixed(1)} h there are no readings. Whatever the curve does there is extrapolation, and it says the phone dies at: {dies}.
+          </p>
+        </>
+      }
       actions={{
         break: {
           label: '20 neurons, no safeguards',

@@ -171,6 +171,21 @@ export default function ColoursLab() {
   return (
     <LabShell
       labId="colours"
+      happening={
+        <>
+          <p>
+            Each step takes one pixel's colour, finds the neuron holding the closest colour (the winner), and pulls it
+            {neighbourhood ? ' and its neighbours on the 8 × 8 grid' : ' alone'} towards that colour.
+          </p>
+          <p>
+            Step {sim.t}: learning rate {Math.max(0.02, 0.5 * Math.exp(-sim.t / 1500)).toFixed(2)}
+            {neighbourhood ? `, neighbourhood radius ${Math.max(0.6, 4 * Math.exp(-sim.t / 1200)).toFixed(1)} grid cells. Both shrink, so the sheet first unfolds and then settles.` : '. With no neighbourhood the sheet has no reason to stay in one piece.'}
+          </p>
+          <p>
+            {dead > 0 ? `${dead} neurons have not won a single pixel (marked × on the map).` : 'Every neuron wins some pixels: none is dead.'}
+          </p>
+        </>
+      }
       actions={{
         break: {
           label: 'Black corner, neighbourhood off',

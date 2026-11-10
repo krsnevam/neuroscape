@@ -249,6 +249,26 @@ export default function ValleyLab() {
   return (
     <LabShell
       labId="valley"
+      happening={
+        <>
+          <p>
+            All three balls start at w = {start.w.toFixed(2)}, b = {start.b.toFixed(2)}. Each iteration every ball reads the slope under it and
+            moves its weights downhill; lower means smaller error.
+          </p>
+          <p>
+            {neuron === 'purelin' && alpha >= limit
+              ? `α = ${alpha.toPrecision(2)} is above the stable limit ${limit.toPrecision(2)}, so each steepest-descent step overshoots the valley floor and lands higher on the other side.`
+              : balls[0].loss > land.min.F + 0.05 && balls[0].its > 30
+                ? 'Steepest descent is on a flat part: the slope is nearly zero, so its steps (α × slope) are tiny. Momentum keeps some speed from earlier steps. Levenberg-Marquardt uses curvature to jump.'
+                : 'Steepest descent steps by α × slope. Momentum adds a share of its previous step. Levenberg-Marquardt estimates the curvature and aims at the bottom directly.'}
+          </p>
+          <p>
+            Lowest so far:{' '}
+            {[...balls].filter((b) => b.status !== 'left the map').sort((a, b) => a.loss - b.loss)[0]?.label ?? 'none'}. The true minimum is F ={' '}
+            {land.min.F.toFixed(4)}.
+          </p>
+        </>
+      }
       actions={{
         break: {
           label: 'Linear neuron, raw hours, α = 0.1',

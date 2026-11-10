@@ -172,6 +172,26 @@ export default function TrafficLab() {
   return (
     <LabShell
       labId="traffic"
+      happening={
+        <>
+          <p>
+            The violet curve is a network fitted to the {sets.train.length} blue training trips. It never sees the grey dots,
+            which are all the real trips.
+          </p>
+          <p>
+            {(() => {
+              const nearest = Math.min(...sets.train.map((t) => Math.abs(t.h - ask)), 24)
+              return nearest > 1.5
+                ? `No training trip lies within ${nearest.toFixed(1)} hours of ${fmtHour(ask)}, so its answer there (${says.toFixed(0)} min) is a guess. Reality is ${real.toFixed(0)} min.`
+                : `It has training trips close to ${fmtHour(ask)}, so its answer (${says.toFixed(0)} min) is near reality (${real.toFixed(0)} min).`
+            })()}
+          </p>
+          <p>
+            Training error {rms(sim.train).toFixed(1)} min, error on all real trips {rms(allSamples).toFixed(1)} min.
+            {rms(allSamples) > 3 * rms(sim.train) ? ' The gap means the sample does not represent the whole day.' : ' They agree, so the sample represents the day well.'}
+          </p>
+        </>
+      }
       actions={{
         break: {
           label: 'Survey only at night (10 pm to 6 am)',

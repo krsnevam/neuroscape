@@ -226,6 +226,24 @@ export default function WaveLab() {
   return (
     <LabShell
       labId="wave"
+      happening={
+        <>
+          <p>
+            The network sees the last {D} position{D > 1 ? 's' : ''} (a tapped delay line) and predicts the next one. It retrains several times a
+            second on the last 12 seconds.
+          </p>
+          <p>
+            {D === 1
+              ? 'One past value tells it where you are, but not which way you are moving, so it cannot follow a wave.'
+              : 'The amber dots are its own predictions fed back in as if they were measurements: that is closed-loop prediction.'}
+          </p>
+          <p>
+            {Number.isFinite(e1) && Number.isFinite(eH)
+              ? `One step ahead it is off by ${e1.toFixed(3)}; one second (15 steps) ahead by ${eH.toFixed(3)}.${eH > 3 * e1 + 0.02 ? ' Errors grow because each step builds on the last guess.' : ''}`
+              : 'Collecting the first predictions.'}
+          </p>
+        </>
+      }
       actions={{
         break: { label: 'Use only 1 delay', run: () => setD(1) },
         fix: { label: 'Use 8 delays', run: () => setD(8) },

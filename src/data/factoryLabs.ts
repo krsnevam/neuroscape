@@ -1,34 +1,8 @@
 /** World 5, the Model Factory: one hands-on station per Unit V lecture, each built on an everyday example. */
+import type { Lab } from './labs'
+import { factoryTheory } from './factoryTheory'
 
-export type StepKind = 'explore' | 'break' | 'fix' | 'prove'
-
-export interface LabStep {
-  kind: StepKind
-  text: string
-  /** Prove steps: the answer, revealed on request */
-  answer?: string
-}
-
-export interface FactoryLab {
-  id: string
-  lecture: string
-  title: string
-  /** The everyday situation this station is built on */
-  story: string
-  /** Syllabus topics the station covers */
-  topics: string
-  color: string
-  steps: LabStep[]
-}
-
-export const stepLabels: Record<StepKind, string> = {
-  explore: 'Explore',
-  break: 'Break',
-  fix: 'Fix',
-  prove: 'Prove',
-}
-
-export const factoryLabs: FactoryLab[] = [
+const stations: Lab[] = [
   {
     id: 'traffic',
     lecture: 'L35',
@@ -37,6 +11,16 @@ export const factoryLabs: FactoryLab[] = [
       'How long does it take to cross Silk Board junction? Every dot is one real trip. You decide which trips the network gets to see.',
     topics: 'Selection of data, sampling, training / validation / test sets',
     color: '#38bdf8',
+    equation: 'a = W² tansig(W¹p + b¹) + b²,  p = hour of day,  a = minutes',
+    words: [
+      { term: 'Sample', meaning: 'The trips we actually collected, out of all the trips that happen.' },
+      { term: 'Training set', meaning: 'The part of the sample used to adjust the weights.' },
+      { term: 'Validation set', meaning: 'A part held back to decide when to stop training or which model to keep.' },
+      { term: 'Test set', meaning: 'A part used once at the end to estimate real-world error.' },
+      { term: 'Stratified sampling', meaning: 'Taking some trips from every block of the day so no period is left out.' },
+      { term: 'Sampling bias', meaning: 'When the way data was collected leaves out some situations.' },
+      { term: 'Extrapolation', meaning: 'Asking the network about inputs outside anything it was trained on.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -66,6 +50,15 @@ export const factoryLabs: FactoryLab[] = [
       'A ₹10 thermistor on an Arduino analog pin gives a number from 0 to 1023, and that number is a badly curved function of temperature. Calibrate it with a network.',
     topics: 'Data preprocessing, normalisation, choice of network architecture',
     color: '#fb923c',
+    equation: 'pₙ = 2(p − p_min)/(p_max − p_min) − 1;   a = W² tansig(W¹pₙ + b¹) + b²',
+    words: [
+      { term: 'Calibration', meaning: 'Finding the rule that turns a raw sensor reading into the real quantity.' },
+      { term: 'Normalisation', meaning: 'Rescaling inputs to the range −1 to 1 before they enter the network.' },
+      { term: 'Saturation', meaning: 'When a sigmoid neuron is pushed so far that its output sits at its limit and its slope is zero.' },
+      { term: 'Hidden neuron', meaning: 'A neuron between input and output; each tansig neuron adds one bend to the curve.' },
+      { term: 'Parameters', meaning: 'All the weights and biases. A 1-S-1 network has 3S + 1 of them.' },
+      { term: 'Levenberg-Marquardt', meaning: 'A fast training algorithm for small networks that uses curvature as well as slope.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -95,6 +88,16 @@ export const factoryLabs: FactoryLab[] = [
       'One neuron predicts whether you stay awake in the 8 am class from your hours of sleep. Its two parameters, w and b, are a position on this landscape. Height is the error.',
     topics: 'Weight initialisation, choice of training algorithm, stopping criteria',
     color: '#34d399',
+    equation: 'F(w, b) = mean (t − a)²;   steepest descent: x(k+1) = x(k) − α g(k)',
+    words: [
+      { term: 'Error surface', meaning: 'The error F drawn as height over every possible pair of weights.' },
+      { term: 'Gradient', meaning: 'The slope of the surface under the ball; it points uphill.' },
+      { term: 'Learning rate α', meaning: 'How big a step is taken along the downhill direction.' },
+      { term: 'Momentum γ', meaning: 'Carrying over part of the previous step, which smooths zig-zags.' },
+      { term: 'Plateau', meaning: 'A flat region where the slope is almost zero and learning crawls.' },
+      { term: 'Stability limit', meaning: 'For a quadratic surface, steepest descent diverges when α exceeds 2/λ_max.' },
+      { term: 'Initial weights', meaning: 'Where the ball starts. Different starts can give different results.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -124,6 +127,16 @@ export const factoryLabs: FactoryLab[] = [
       'A bank asks you to flag fraudulent UPI payments. About 6 in every 100 are fraud. Your network scores a very high accuracy on day one. Should the bank be happy?',
     topics: 'Post-training analysis, pattern recognition, confusion matrix, ROC',
     color: '#f472b6',
+    equation: 'a = logsig(W²tansig(W¹p + b¹) + b²);   alarm if a ≥ threshold',
+    words: [
+      { term: 'Confusion matrix', meaning: 'A count of the four outcomes: caught, missed, wrongly blocked, correctly passed.' },
+      { term: 'Sensitivity', meaning: 'The share of real frauds that were caught.' },
+      { term: 'Specificity', meaning: 'The share of genuine payments that were passed.' },
+      { term: 'Precision', meaning: 'The share of alarms that were real frauds.' },
+      { term: 'Threshold', meaning: 'The output level above which the alarm rings.' },
+      { term: 'ROC curve', meaning: 'Sensitivity against false alarm rate as the threshold sweeps from 1 to 0.' },
+      { term: 'Class imbalance', meaning: 'When one class is far more common, so accuracy alone is misleading.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -153,6 +166,15 @@ export const factoryLabs: FactoryLab[] = [
       'You noted your phone battery a few times since morning. Can a network tell you when it will die tonight? Tap the chart to add your own readings.',
     topics: 'Overfitting and extrapolation, early stopping, regularisation',
     color: '#facc15',
+    equation: 'F = E_D + λ E_W   (squared errors + weight decay × squared weights)',
+    words: [
+      { term: 'Generalisation', meaning: 'Doing well on inputs that were not used for training.' },
+      { term: 'Overfitting', meaning: 'Fitting the noise in the training data, so the curve wiggles between points.' },
+      { term: 'Underfitting', meaning: 'A network too small to follow even the training data.' },
+      { term: 'Early stopping', meaning: 'Keeping the weights from the moment the validation error was lowest.' },
+      { term: 'Weight decay', meaning: 'A penalty on large weights, which keeps the curve smooth.' },
+      { term: 'Extrapolation', meaning: 'Predicting outside the range of the training data. No setting fixes it; only data does.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -182,6 +204,14 @@ export const factoryLabs: FactoryLab[] = [
       'Last overs of a T20 chase. Every simulated match ends in a win or a loss, nothing in between. Yet the network learns the chance of winning.',
     topics: 'Function approximation, probability estimation',
     color: '#a78bfa',
+    equation: 'a = logsig(W²tansig(W¹p + b¹) + b²),  p = [runs needed, balls left],  t ∈ {0, 1}',
+    words: [
+      { term: 'Target', meaning: 'The known outcome used for training: 1 for a win, 0 for a loss.' },
+      { term: 'Probability estimation', meaning: 'Training on yes/no outcomes so that the output becomes the chance of yes.' },
+      { term: 'Cross-entropy', meaning: 'The performance function suited to probabilities.' },
+      { term: 'Simulation', meaning: 'Playing a match ball by ball with random outcomes to create data.' },
+      { term: 'Function approximation', meaning: 'Learning a smooth surface from scattered examples.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -211,6 +241,14 @@ export const factoryLabs: FactoryLab[] = [
       'Teach a network your own handwriting. Draw a circle, a cross or a tick, tell it which one it was, and watch it start guessing before you finish the stroke.',
     topics: 'Pattern recognition case study, feature extraction, softmax',
     color: '#fb7185',
+    equation: 'a = softmax(W²tansig(W¹p + b¹) + b²),  p = 64 pixels,  a = 3 probabilities',
+    words: [
+      { term: 'Feature extraction', meaning: 'Turning raw input (a drawing) into the numbers the network uses (64 cells).' },
+      { term: 'Preprocessing', meaning: 'Cleaning up the input first, here by centring and scaling the drawing.' },
+      { term: 'Class', meaning: 'One of the categories to recognise: circle, cross or tick.' },
+      { term: 'Softmax', meaning: 'An output layer whose values are positive and add to 1, so they read as probabilities.' },
+      { term: 'Training example', meaning: 'A drawing together with its correct label.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -240,6 +278,16 @@ export const factoryLabs: FactoryLab[] = [
       'Point the camera at anything, or use the Holi powder sample. No labels, no teacher: an elastic sheet of 64 neurons stretches through colour space until it fits what it sees.',
     topics: 'Clustering case study, self-organising map',
     color: '#22d3ee',
+    equation: 'w_i(q) = w_i(q−1) + α h(i, i*) (p − w_i(q−1))',
+    words: [
+      { term: 'Clustering', meaning: 'Finding groups in data that has no labels.' },
+      { term: 'Prototype', meaning: 'A neuron’s weight vector: here, the colour it stands for.' },
+      { term: 'Winner', meaning: 'The neuron whose prototype is closest to the current input.' },
+      { term: 'Neighbourhood', meaning: 'The neurons near the winner on the grid, which learn along with it.' },
+      { term: 'Dead neuron', meaning: 'A neuron that never wins, so it never learns.' },
+      { term: 'Quantisation error', meaning: 'Average distance from each input to its closest prototype.' },
+      { term: 'Topographic error', meaning: 'Share of inputs whose two closest prototypes are not grid neighbours.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -269,6 +317,15 @@ export const factoryLabs: FactoryLab[] = [
       'Move your finger up and down in a rhythm. The network watches your last few positions and draws where you are going next, before you get there.',
     topics: 'Prediction case study, tapped delay line, open and closed loop',
     color: '#4ade80',
+    equation: 'a(t) = f( y(t−1), y(t−2), …, y(t−D) )',
+    words: [
+      { term: 'Time series', meaning: 'Values measured one after another in time.' },
+      { term: 'Tapped delay line', meaning: 'A row of delays that hands the network the last D values.' },
+      { term: 'One-step prediction', meaning: 'Predicting the next value from measured past values.' },
+      { term: 'Closed loop', meaning: 'Feeding predictions back in as inputs to predict further ahead.' },
+      { term: 'Error autocorrelation', meaning: 'How much each error resembles the errors a few steps earlier. Ideally not at all.' },
+      { term: 'White error', meaning: 'Errors with no pattern left in them.' },
+    ],
     steps: [
       {
         kind: 'explore',
@@ -292,4 +349,4 @@ export const factoryLabs: FactoryLab[] = [
   },
 ]
 
-export const labById = (id: string | undefined) => factoryLabs.find((l) => l.id === id)
+export const factoryLabs: Lab[] = stations.map((lab) => ({ ...lab, ...factoryTheory[lab.id] }))

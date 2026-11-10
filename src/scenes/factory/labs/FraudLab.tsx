@@ -149,6 +149,22 @@ export default function FraudLab() {
   return (
     <LabShell
       labId="fraud"
+      happening={
+        <>
+          <p>
+            The network gives every payment a score from 0 to 1. Above {thr.toFixed(2)} the alarm rings; that is the red area.
+            {sim.its < 6000 ? ' It is still training, so the red area is still moving.' : ''}
+          </p>
+          <p>
+            Of the {c.tp + c.fn} frauds in the test set it catches {c.tp} (white rings) and misses {c.fn} (pulsing red rings). It blocks {c.fp}{' '}
+            genuine payments (amber squares).
+          </p>
+          <p>
+            Accuracy is {(r.accuracy * 100).toFixed(0)}% mostly because {c.tn} genuine payments are easy to pass. The number that matters to the bank
+            is fraud caught: {(r.sensitivity * 100).toFixed(0)}%.
+          </p>
+        </>
+      }
       actions={{
         break: { label: 'Threshold 0.5, original data', run: () => { setBalance(false); setThr(0.5) } },
         fix: { label: 'Rebalance the training data', run: () => setBalance(true) },

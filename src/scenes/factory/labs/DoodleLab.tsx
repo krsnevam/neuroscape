@@ -194,6 +194,29 @@ export default function DoodleLab() {
   return (
     <LabShell
       labId="doodle"
+      happening={
+        <>
+          {empty ? (
+            <p>
+              Waiting for a drawing. The network has learned from {examples.length} examples; its training loss is {sim.loss.toFixed(3)}.
+            </p>
+          ) : (
+            <>
+              <p>
+                Your strokes became {seen.filter(Boolean).length} lit cells out of 64. Those 64 numbers are all the network sees.
+              </p>
+              <p>
+                Softmax turns its three outputs into probabilities that add to 100%: {classes.map((c, i) => `${c.label} ${(probs[i] * 100).toFixed(0)}%`).join(', ')}.
+              </p>
+            </>
+          )}
+          <p>
+            {pre
+              ? 'Preprocessing is on: every drawing is centred and scaled first, so where and how big you draw does not matter.'
+              : 'Preprocessing is off: the drawing is used exactly where you drew it, so the same shape in a new place lights different cells.'}
+          </p>
+        </>
+      }
       actions={{
         break: { label: 'Switch preprocessing off', run: () => setPre(false) },
         fix: { label: 'Centre and scale again', run: () => setPre(true) },

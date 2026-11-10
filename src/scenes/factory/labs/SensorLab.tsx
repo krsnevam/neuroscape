@@ -140,6 +140,24 @@ export default function SensorLab() {
   return (
     <LabShell
       labId="sensor"
+      happening={
+        <>
+          <p>
+            Pin A0 reads {live.current.adc}.{' '}
+            {norm
+              ? `It is scaled to ${sim.input(live.current.adc).toFixed(2)} before it enters the network, so the tansig neurons work on their sloping part.`
+              : `It goes in raw, so n = w × ${live.current.adc} + b is huge and tansig is stuck at +1 or −1, where its slope is zero.`}
+          </p>
+          <p>
+            {saturated > 0
+              ? `${saturated} of ${S} hidden neurons are saturated (red bars). A saturated neuron passes no gradient back, so its weights stop learning.`
+              : `Each of the ${S} hidden neurons adds one bend. Training has adjusted the ${3 * S + 1} parameters ${sim.its} times.`}
+          </p>
+          <p>
+            Against a reference thermometer the network is off by {netErr.toFixed(2)} °C; a straight line is off by {lineErr.toFixed(2)} °C.
+          </p>
+        </>
+      }
       actions={{
         break: { label: 'Feed raw counts (normalisation off)', run: () => setNorm(false) },
         fix: { label: 'Normalise the input', run: () => setNorm(true) },
