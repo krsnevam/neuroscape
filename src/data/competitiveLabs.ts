@@ -7,22 +7,47 @@ export const competitiveLabs: Lab[] = [
     lecture: 'Unit IV',
     title: 'Filter Coffee Reflex',
     story:
-      'The smell of filter coffee makes your mouth water. Nobody taught you that. The steel tumbler it comes in means nothing at first. One neuron learns to link the two, with no teacher and no targets.',
+      'The smell of filter coffee makes your mouth water. Nobody taught you that. The steel tumbler it comes in means nothing at first. One neuron learns to link the two, with no teacher telling it the right answer.',
     topics: 'Simple associative network, unsupervised Hebb rule, Hebb rule with decay',
     color: '#38bdf8',
+    takeaway: 'A Hebbian weight grows when its input and the neuron’s output are active together. Without decay it grows forever; with decay it levels off, but the link fades when the pairing stops.',
+    picture: [
+      { mark: 'Coffee cup in an amber circle', meaning: 'The smell of coffee, p⁰. The circle lights up on trials where the smell is present.', color: '#fbbf24' },
+      { mark: 'Steel tumbler in a blue circle', meaning: 'The sight of the tumbler, p. The circle lights up on trials where the tumbler is seen.', color: '#38bdf8' },
+      { mark: 'Amber wire', meaning: 'The fixed weight w⁰ from the smell. It is always 1 and never changes.', color: '#fbbf24' },
+      { mark: 'Blue wire', meaning: 'The learned weight w from the sight of the tumbler. It gets thicker as w grows and is dashed while w is 0.', color: '#38bdf8' },
+      { mark: 'White dot moving along a wire', meaning: 'A stimulus travelling to the neuron on the trial just presented.' },
+      { mark: 'Circle with Σ', meaning: 'The neuron. It adds up its inputs and glows orange when it fires.', color: '#fb923c' },
+      { mark: 'Blue drops on the right', meaning: 'The response: they fall when the neuron fires (a = 1) and the mouth waters.', color: '#7dd3fc' },
+      { mark: 'Light blue line in the chart', meaning: 'The weight w after every trial.', color: '#7dd3fc' },
+      { mark: 'Orange and grey dots on the line', meaning: 'Orange means the neuron fired on that trial; grey means it stayed silent.', color: '#fb923c' },
+      { mark: 'Orange dashed line at 0.5', meaning: 'Once w is above this line the tumbler alone makes the neuron fire.', color: '#fb923c' },
+      { mark: 'Green dashed line', meaning: 'The limit α/γ that the weight cannot pass. It appears only when decay is on.', color: '#34d399' },
+      { mark: 'Small coloured marks under the chart', meaning: 'What was presented on each trial: green for coffee in the tumbler, blue for the tumbler only, amber for smell only, grey for nothing.' },
+      { mark: 'Pulsing white dot', meaning: 'The current value of the weight w.' },
+    ],
+    industry: {
+      setting: 'Neuroscience research labs and neuromorphic chip teams',
+      problem: 'Researchers want to understand how the brain links two things in memory. Chip designers want hardware that can learn on the device using very little power.',
+      howUsed:
+        'Hebbian learning is used mostly in these two places, not in everyday business software. Neuroscientists fit Hebb rules with decay to conditioning experiments and check whether the model forgets at the same rate the animals do. Neuromorphic chips change each connection using only the two signals that meet at it, which is the Hebb idea, so no central computer has to calculate an error.',
+      goesWrong:
+        'Plain Hebb weights keep growing until they hit the hardware limit, and unrelated inputs that happen to be active together get linked. Teams add decay or a cap on each weight, and they normalise the weights of a neuron so the total stays fixed.',
+      roles: 'Computational neuroscientist, neuromorphic hardware engineer, research scientist.',
+    },
     equation: 'a = hardlim(w⁰p⁰ + w p + b)   Hebb: w(q) = w(q−1) + α a(q) p(q)   with decay: … − γ w(q−1),  w_max = α/γ',
     steps: [
       {
         kind: 'explore',
-        text: 'Tap "Empty tumbler only" on a fresh network: nothing happens. Now tap "Coffee in the tumbler" once, then the empty tumbler again. Read the weight on the chart after each tap.',
+        text: 'Tap "Forget everything", then "Empty tumbler only": nothing happens. Now tap "Coffee in the tumbler" once, then the empty tumbler again. Read the weight on the chart after each tap.',
       },
       {
         kind: 'break',
-        text: 'Let the college days run with no decay. Every day that smell and sight come together adds α to the weight. Watch the chart: the line never levels off.',
+        text: 'Let the college days run with no decay. Every day that smell and sight come together adds the learning rate α, a fixed step, to the weight. Watch the chart: the line never levels off.',
       },
       {
         kind: 'fix',
-        text: 'Switch decay on. The weight now settles at α/γ. Then switch to "Holidays" and watch the price: with nothing presented, the weight fades and the link is forgotten.',
+        text: 'Switch decay on. The weight now settles at α/γ. Then switch to "Holidays" and watch the cost: with nothing presented, the weight fades and the link is forgotten.',
       },
       {
         kind: 'prove',
@@ -77,14 +102,40 @@ export const competitiveLabs: Lab[] = [
     lecture: 'Unit IV',
     title: 'Ringtone and Face',
     story:
-      'Your phone rings in your pocket. From the sound alone you know it is Anu, and her face comes to mind. The first half is an instar: many inputs, one neuron that recognises a vector. The second half is an outstar: one cue that recalls a whole pattern.',
+      'Your phone rings in your pocket. From the sound alone you know it is Anu, and her face comes to mind. The first half is an instar: many inputs, one neuron that recognises one pattern of inputs. The second half is an outstar: one cue that recalls a whole pattern.',
     topics: 'Simple recognition network, instar rule, Kohonen rule, simple recall network, outstar rule',
     color: '#818cf8',
+    takeaway: 'An instar moves its weights toward an input only while it is active, so other inputs cannot wear its memory away. An outstar lets one cue bring back a whole stored pattern.',
+    picture: [
+      { mark: 'Dashed circle', meaning: 'Every sound of length 1. Bass is measured across and treble upwards, so each ringtone is a point on this circle.' },
+      { mark: 'Grey dots named Anu, Mum and Unknown number', meaning: 'Where each caller’s ringtone sits on the circle.', color: '#64748b' },
+      { mark: 'Amber arrow p', meaning: 'The ringtone that will ring next. Drag it around the circle to choose another sound.', color: '#fbbf24' },
+      { mark: 'Amber ripples', meaning: 'The tone that has just rung.', color: '#fbbf24' },
+      { mark: 'Indigo arrow w', meaning: 'The neuron’s weight vector: the sound it has learned to expect.', color: '#818cf8' },
+      { mark: 'Grey dashed line', meaning: 'The gap p − w between the old weights and the tone that rang.' },
+      { mark: 'Green arrow', meaning: 'The step the weights just took. With the instar rule it points toward p.', color: '#34d399' },
+      { mark: 'Green wedge', meaning: 'Tones that now fire the neuron on their own, without the name on screen.', color: '#34d399' },
+      { mark: 'Phone at the top left', meaning: 'Shows "Anu calling" in an amber frame when the name is on screen (p⁰ = 1), and stays dark when it is face down.' },
+      { mark: 'Lamp at the top right', meaning: 'The neuron’s output. Green means a = 1, "It is Anu"; grey means silent.', color: '#34d399' },
+      { mark: 'Recall: amber grid on the left', meaning: 'The face your eyes see, p⁰. It fades after a moment.', color: '#fbbf24' },
+      { mark: 'Recall: indigo grid in the middle', meaning: 'The 49 weights leaving the cue. Bright squares are the parts of the face it has stored.', color: '#818cf8' },
+      { mark: 'Recall: white grid on the right', meaning: 'The picture that comes to mind, a.', color: '#f8fafc' },
+      { mark: 'Recall: indigo circle with lines above', meaning: 'The cue, Anu’s tone, fanning out to every weight. It glows when the tone rings (p = 1).', color: '#818cf8' },
+    ],
+    industry: {
+      setting: 'Phone and laptop makers, biometrics team for face and voice unlock',
+      problem: 'A user’s face and voice change slowly: new glasses, a beard, a cold. A stored template that never changes starts to reject its own owner.',
+      howUsed:
+        'The device keeps a template for the owner, like the weight vector w. After an unlock that matched with high confidence, the template is moved a small fraction toward the new sample. When the match is weak, nothing changes. That is the instar idea: learn only when the neuron is active. Once the owner is recognised, the device loads that person’s whole profile from one cue, which is the outstar idea. Real products use many more features than two, but the update has the same shape.',
+      goesWrong:
+        'If the template is updated on doubtful matches it can drift slowly toward someone else, such as a sibling who looks alike. Teams update only after a very confident match or a correct PIN, keep the original enrolment template, and limit how far the template may move from it.',
+      roles: 'Biometrics engineer, embedded ML engineer, security engineer.',
+    },
     equation: 'Instar: a = hardlim(w⁰p⁰ + wᵀp + b),  Δw = α a (p − w)   Outstar: a = satlins(W⁰p⁰ + w p),  Δw = α (a − w) p',
     steps: [
       {
         kind: 'explore',
-        text: 'Recognise: ring Anu\'s tone with her name on the screen and watch the weight vector w swing toward the sound p. Then ring with the screen face down. Switch to Recall and teach the face in the same way.',
+        text: 'Recognise: ring Anu\'s tone with her name on the screen and watch the arrow w, the neuron\'s weights, swing toward the arrow p, the sound. Then ring with the screen face down. Switch to Recall and teach the face in the same way.',
       },
       {
         kind: 'break',
@@ -92,7 +143,7 @@ export const competitiveLabs: Lab[] = [
       },
       {
         kind: 'fix',
-        text: 'Switch to the instar rule. The decay is now multiplied by a, so w changes only when the neuron is active. Other callers leave it untouched.',
+        text: 'Switch to the instar rule. The forgetting part is now multiplied by the output a, so w changes only when the neuron is active. Other callers leave it untouched.',
       },
       {
         kind: 'prove',
@@ -151,6 +202,27 @@ export const competitiveLabs: Lab[] = [
       'Every dot is one hostel student: when they sleep and when they wake. Nobody has labelled them. A few neurons compete for each student, and only the closest one learns. Each tower ends up standing in the middle of one group.',
     topics: 'Hamming network, competitive layer, competitive learning, problems with competitive layers',
     color: '#22d3ee',
+    takeaway: 'In a competitive layer only the closest neuron learns, so each neuron drifts to the centre of one group. A neuron that never wins never learns.',
+    picture: [
+      { mark: 'Floor', meaning: 'Bedtime runs across, from 10 pm to 4 am. Wake-up time runs into the screen, from 5 am to 11 am.' },
+      { mark: 'Small white dots on the floor', meaning: 'Students, one dot each, placed by when they sleep and wake.', color: '#e2e8f0' },
+      { mark: 'Coloured towers', meaning: 'The neurons, one colour each. A tower stands at its neuron’s weights, and its height is the share of students it has won.' },
+      { mark: 'Label above each tower', meaning: 'The neuron’s number, its wins and its share of wins.' },
+      { mark: 'Grey tower with a pink "dead: 0 wins" label', meaning: 'A dead neuron that has not won a single student.', color: '#475569' },
+      { mark: 'Tinted floor areas', meaning: 'Each patch takes a dim shade of the tower that would win a student standing there.' },
+      { mark: 'White ball with a thin white beam', meaning: 'The student being shown to the neurons right now.', color: '#ffffff' },
+      { mark: 'White line from the ball to a tower', meaning: 'Joins the student to the winning neuron, which steps toward the student.' },
+      { mark: 'Bars in the box at the top left', meaning: 'Each neuron’s distance to the current student. The shortest bar wins and gets a ★. With the conscience on, the bias is shown next to it.' },
+    ],
+    industry: {
+      setting: 'Retailers and telecom operators, customer analytics team',
+      problem: 'There are millions of customers and no labels saying what kind each one is. Marketing wants a few groups it can plan offers for.',
+      howUsed:
+        'Each customer is described by a few scaled numbers, such as visits per month, average spend and share of purchases made on discount. A clustering method such as k-means, a batch form of this competitive learning, places a fixed number of centres. Every customer belongs to the nearest centre, and analysts name each group from its centre ("frequent small baskets"). Image tools use the same idea to cut a photo down to a few colours.',
+      goesWrong:
+        'Results depend on the starting centres and on the number of groups chosen, and some centres end up with almost no customers, like a dead neuron. Teams run the method from several starts, compare a few group counts, move empty centres onto real customers, and check the groups with the business before using them.',
+      roles: 'Data scientist, marketing analyst, CRM manager.',
+    },
     equation: 'a = compet(n),  nᵢ = −‖ᵢw − p‖ + bᵢ   winner i*: ᵢ*w(q) = ᵢ*w(q−1) + α (p − ᵢ*w(q−1))',
     steps: [
       {
@@ -163,7 +235,7 @@ export const competitiveLabs: Lab[] = [
       },
       {
         kind: 'fix',
-        text: 'Switch the conscience on. A neuron that wins more than its share gets a negative bias, and a neuron that never wins gets a positive one. The dead tower starts to win and walks into the data.',
+        text: 'Switch the conscience on. A neuron that wins more than its share gets a handicap (a negative bias), and a neuron that never wins gets a boost (a positive bias). The dead tower starts to win and walks into the data.',
       },
       {
         kind: 'prove',
@@ -219,9 +291,30 @@ export const competitiveLabs: Lab[] = [
     lecture: 'Unit IV',
     title: 'Delivery Hub Map',
     story:
-      'A delivery company places hubs across a city. Every address should have a hub nearby, and hubs that are neighbours on the roster should be neighbours on the ground, so riders can cover for each other. A self-organising map learns both at once.',
+      'A delivery company places hubs across a city. Every address should have a hub nearby. The hubs are also numbered on a roster, a grid of who works next to whom, and roster neighbours should be neighbours on the ground, so riders can cover for each other. A self-organising map learns both at once.',
     topics: 'Self-organizing feature maps, improving feature maps',
     color: '#2dd4bf',
+    takeaway: 'A feature map moves the winner’s grid neighbours too, so neighbouring neurons end up covering neighbouring data. Start with a wide neighbourhood and shrink it slowly.',
+    picture: [
+      { mark: 'Dark square with faint streets', meaning: 'The city, 10 km by 10 km. West to east runs across, south to north runs up.' },
+      { mark: 'Faint amber dots', meaning: 'Addresses that orders come from: the data.', color: '#fbbf24' },
+      { mark: 'Coloured dots', meaning: 'The hubs (neurons), placed at their weights. The colour shows each hub’s place on the roster, so a twist shows up as mixed colours.' },
+      { mark: 'White lines between hubs', meaning: 'Links between roster neighbours. Crossed white lines mean the map is twisted there.' },
+      { mark: 'Pulsing amber dot with a white line and ring', meaning: 'The order just placed, joined to its winning hub, which has the white ring.', color: '#fbbf24' },
+      { mark: 'Teal glow around hubs', meaning: 'The winner’s neighbours that learn along with it. A larger glow means a larger step.', color: '#2dd4bf' },
+      { mark: 'Teal bar at the top left', meaning: 'The neighbourhood radius r. It shrinks as training goes on.', color: '#2dd4bf' },
+      { mark: 'Amber bar at the top right', meaning: 'The learning rate α. It shrinks too when "Reduce α over time" is on.', color: '#fbbf24' },
+      { mark: 'Small "roster" grid at the bottom right', meaning: 'The same hubs laid out in their real grid or chain. Bright cells are the hubs learning from this order.' },
+    ],
+    industry: {
+      setting: 'Factories, power plants and analytics teams, condition monitoring and exploratory analysis',
+      problem: 'Machines produce hundreds of readings a second, and analysts face tables with thousands of rows and dozens of columns. People need a picture they can read to spot what is normal and what is not.',
+      howUsed:
+        'Engineers train a map on months of readings from healthy running. Each region of the map is labelled by its operating state, such as start-up, full load or idling. The live state is shown as a point moving across the map, and a reading whose closest neuron is far away raises an alert for inspection. Analysts use the same kind of map to lay out customer or survey records so that similar records sit side by side.',
+      goesWrong:
+        'A map trained on too short a period misses normal states it never saw, such as winter running, and then raises false alarms. Teams train on data that covers every season and operating mode, review each alert with the operators, and retrain when the plant changes.',
+      roles: 'Reliability engineer, condition monitoring analyst, data scientist.',
+    },
     equation: 'ᵢw(q) = ᵢw(q−1) + α(q) h(i, i*) (p − ᵢw(q−1)),  h = exp(−d²(i, i*) / 2r(q)²),  r and α shrink over time',
     steps: [
       {
@@ -230,7 +323,7 @@ export const competitiveLabs: Lab[] = [
       },
       {
         kind: 'break',
-        text: 'Start with a tiny neighbourhood. Each hub learns alone, so the roster order is never built. The net stays tangled and the topographic error stays high.',
+        text: 'Start with a tiny neighbourhood. Each hub learns alone, so roster neighbours never learn to sit near each other. The net stays tangled and the topographic error stays high.',
       },
       {
         kind: 'fix',
@@ -292,11 +385,35 @@ export const competitiveLabs: Lab[] = [
       'Spam is not one thing. Promotions are full of links. Scams SHOUT in capitals. Genuine mail also comes in two kinds. Each message is a dot: links on one axis, share of capitals on the other. This time every dot has a label, and the network uses it.',
     topics: 'Learning vector quantization, LVQ learning',
     color: '#60a5fa',
+    takeaway: 'LVQ uses labels: the closest prototype moves toward a message of its own class and away from one of the other class. A class made of several separate groups needs several prototypes.',
+    picture: [
+      { mark: 'Axes', meaning: 'Number of links in the message (across) and share of capital letters (up).' },
+      { mark: 'Blue dots', meaning: 'Genuine messages.', color: '#38bdf8' },
+      { mark: 'Rose dots', meaning: 'Spam messages.', color: '#fb7185' },
+      { mark: 'Faint group names', meaning: 'The four kinds of mail: friends and newsletters are genuine, promotions and scams are spam.' },
+      { mark: 'Numbered diamonds', meaning: 'The prototypes, one per subclass, in the colour of the class they belong to.' },
+      { mark: 'Blue and rose shading', meaning: 'The answer the network gives for a message at that spot: genuine or spam.' },
+      { mark: 'White ring', meaning: 'The labelled message being shown right now.', color: '#f8fafc' },
+      { mark: 'Dashed white line', meaning: 'Joins the message to the closest prototype, the winner.' },
+      { mark: 'Green arrow', meaning: 'The winner’s class matches the label, so it steps toward the message.', color: '#34d399' },
+      { mark: 'Red arrow', meaning: 'The winner’s class is wrong, so it steps away from the message.', color: '#f87171' },
+      { mark: 'Dashed green arrow', meaning: 'LVQ2 only: the closest prototype of the right class is also pulled toward the message.', color: '#34d399' },
+      { mark: 'W² table at the top right', meaning: 'Which subclass belongs to which class. A 1 means "this prototype counts as this class".' },
+    ],
+    industry: {
+      setting: 'Medical device makers, banks and insurers, teams whose models must be easy to inspect',
+      problem: 'Doctors, auditors and regulators want to see why a model gave its answer, not just the answer.',
+      howUsed:
+        'The classifier keeps a small number of labelled prototypes per class, and a new case gets the class of its nearest prototype. Each prototype is a typical case that an expert can look at, such as a typical normal heartbeat or two typical kinds of abnormal beat. The explanation for any decision is simple: it looked most like this prototype. A small device can also store a few prototypes far more cheaply than thousands of examples.',
+      goesWrong:
+        'Distance treats every input the same, so an input measured in large numbers swamps the others, and a class with more kinds than prototypes is partly misclassified. Teams scale every input first, give each known subtype its own prototypes, and have a domain expert check that each prototype looks like a real case.',
+      roles: 'Data scientist, clinical or domain expert, model validation analyst.',
+    },
     equation: 'a¹ = compet(−‖ᵢw¹ − p‖),  a² = W²a¹   right class: ᵢ*w¹ += α (p − ᵢ*w¹)   wrong class: ᵢ*w¹ −= α (p − ᵢ*w¹)',
     steps: [
       {
         kind: 'explore',
-        text: 'Each diamond is a subclass prototype. The closest one wins. If its class matches the label it steps toward the message (green), otherwise it steps away (red). The shading shows what the network would say everywhere.',
+        text: 'Each diamond is a prototype: a point that stands for one subclass of mail. The closest one wins. If its class matches the label it steps toward the message (green), otherwise it steps away (red). The shading shows what the network would say everywhere.',
       },
       {
         kind: 'break',
@@ -362,11 +479,35 @@ export const competitiveLabs: Lab[] = [
       'The hostel\'s power demand rises in the morning, dips in the afternoon and peaks at night. A radial basis network builds that curve out of hills. Each hidden neuron is one hill around its centre, and the output adds the hills up.',
     topics: 'Radial basis network, function approximation, pattern classification, training RBF networks, clustering',
     color: '#a78bfa',
+    takeaway: 'An RBF network builds a curve by adding up local hills. Choose the spread so neighbouring hills overlap: too narrow fails between the data, too wide loses the detail.',
+    picture: [
+      { mark: 'Thick grey curve', meaning: 'The real power demand through the day, which the network should match.', color: '#94a3b8' },
+      { mark: 'Orange dots', meaning: 'Meter readings: the training data. There are more of them around the morning and night peaks.', color: '#fb923c' },
+      { mark: 'Coloured shaded hills', meaning: 'One hidden neuron each, multiplied by its output weight. A hill below the zero line has a negative weight.' },
+      { mark: 'Dashed light line', meaning: 'The output bias b², which lifts or lowers the whole sum.' },
+      { mark: 'Glowing white curve', meaning: 'The network’s output: all the hills added up, plus the bias.', color: '#f5f3ff' },
+      { mark: 'Triangles under the chart', meaning: 'The centres, one per hill in the same colour. Drag one to move its hill.' },
+      { mark: 'White outline and white bar on one hill', meaning: 'The picked hill: the bar shows its spread either side of the centre, and the label gives its weight.' },
+      { mark: 'Red message at the top', meaning: 'The hills have huge weights that cancel each other and have left the chart.', color: '#fb7185' },
+      { mark: 'Classify: green dots', meaning: 'Spots on the hostel floor with a strong phone signal.', color: '#34d399' },
+      { mark: 'Classify: red dots', meaning: 'Spots with a weak signal, in a ring around the router.', color: '#fb7185' },
+      { mark: 'Classify: green and red shading', meaning: 'The network’s answer at each spot. Deeper shading means a larger output.' },
+      { mark: 'Classify: coloured dots with dashed circles', meaning: 'The centres seen from above. The circle’s radius is the spread and the number above is the output weight w².' },
+    ],
+    industry: {
+      setting: 'Engineering firms and control teams, plus data science teams that use kernel methods',
+      problem: 'Engineers need a smooth, fast model of a measured relationship, such as an engine’s response to its settings, from a limited number of costly tests.',
+      howUsed:
+        'Design teams fit an RBF model to the results of a few dozen expensive tests or simulations, then search that cheap model for good settings before running the next test. Control engineers add Gaussian basis functions to a controller so it can learn a correction for effects such as friction that the physics model misses. The same Gaussian hill is the most common kernel in support vector machines and Gaussian process models.',
+      goesWrong:
+        'A spread chosen by eye gives a model that is spiky or blurred, and the model is trusted outside the range of the tests, where every hill has faded to zero. Teams pick the spread by checking error on held-back test points and flag any request that falls outside the tested range.',
+      roles: 'Control engineer, simulation engineer, data scientist.',
+    },
     equation: 'a¹ᵢ = exp(−(‖p − ᵢw¹‖ b¹ᵢ)²),  a² = W²a¹ + b²   two stages: centres by clustering, then x* = (UᵀU + ρI)⁻¹Uᵀt',
     steps: [
       {
         kind: 'explore',
-        text: 'Drag a triangle to move a centre and change the spread. Each coloured hill is one neuron times its output weight; the white curve is their sum. Then try the two training stages, and the Classify mode.',
+        text: 'Drag a triangle to move a centre, and use the slider to change the spread. Each coloured hill is one neuron times its output weight; the white curve is their sum. Then try the two training stages, and "Classify signal spots".',
       },
       {
         kind: 'break',
@@ -378,7 +519,7 @@ export const competitiveLabs: Lab[] = [
       },
       {
         kind: 'prove',
-        text: 'A network has centres at −1 and 1, both biases b¹ = 2, W² = [1 1] and b² = 0. Find the output at p = 0. Then explain why its second layer can be trained in one shot, and how its hidden units differ from tansig units.',
+        text: 'A network has centres at −1 and 1, both biases b¹ = 2, W² = [1 1] and b² = 0. Find the output at p = 0. Then explain why its second layer can be trained in one shot, and how its hidden units differ from the S-shaped tansig units of a multilayer network.',
         answer:
           'Each hidden neuron: n = ‖0 − (±1)‖ × 2 = 2, a¹ = exp(−2²) = exp(−4) = 0.0183. Output a² = 0.0183 + 0.0183 = 0.0366: almost zero, because these hills are too narrow to reach the middle. With centres and biases fixed, a² is linear in W² and b², so the squared error is a quadratic bowl with one minimum, found by linear least squares. A tansig neuron responds across half of the input space (global), so every weight affects the fit everywhere. A radial basis neuron responds only near its centre (local): training is fast and changes stay local, but covering a high-dimensional input needs many hills.',
       },

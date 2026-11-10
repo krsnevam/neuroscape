@@ -11,6 +11,32 @@ export const perceptronLabs: Lab[] = [
     topics: 'Perceptron architecture, single-neuron perceptron, decision boundary',
     color: '#fbbf24',
     equation: 'n = Wp + b = w₁p₁ + w₂p₂ + b;   a = hardlim(n);   boundary: Wp + b = 0',
+    takeaway: 'One neuron makes a yes or no decision by drawing one straight line. The weights turn the line and the bias slides it.',
+    picture: [
+      { mark: 'Circles', meaning: 'Students the college allows to sit the exam (target t = 1).' },
+      { mark: 'Squares', meaning: 'Students the college refuses (target t = 0).' },
+      { mark: 'Amber fill', meaning: 'The perceptron says this student is allowed (a = 1).', color: '#fbbf24' },
+      { mark: 'Blue fill', meaning: 'The perceptron says this student is refused (a = 0).', color: '#38bdf8' },
+      { mark: 'Pulsing red ring', meaning: 'The perceptron disagrees with the college for this student.', color: '#fb7185' },
+      { mark: 'White line', meaning: 'The decision boundary: every point where the sum n is exactly 0.', color: '#f8fafc' },
+      { mark: 'Faint amber shading', meaning: 'The side of the line where n is 0 or more, so the gate opens.' },
+      { mark: '"a = 1 allowed" and "a = 0 refused" labels', meaning: 'Which side of the line gives which answer.' },
+      { mark: 'Pink arrow with a ring at its tip', meaning: 'The weight vector W. Drag the ringed tip to turn it, and the line turns with it.', color: '#f472b6' },
+      { mark: 'Small corner mark and "90°"', meaning: 'W always meets the line at a right angle.' },
+      { mark: 'White square on the line', meaning: 'The bias handle. Drag it to slide the line without turning it; its label shows b.' },
+      { mark: 'Dashed white ring and "n =" label', meaning: 'The student you tapped, with that student’s sum n.' },
+      { mark: 'Small cross at the bottom left', meaning: 'The origin: 0% attendance and 0 marks.' },
+      { mark: 'Red ring at the origin', meaning: 'Shown when the bias is off: the line is pinned to this point and can only turn.', color: '#fb7185' },
+    ],
+    industry: {
+      setting: 'Banks and lenders, credit risk team',
+      problem: 'Thousands of loan and credit card applications arrive every day. Each needs a quick, consistent and explainable yes or no.',
+      howUsed:
+        'The team builds a scorecard: each fact about the applicant (income, existing debt, years at the same address, missed payments) gets a weight, and the weighted sum is compared with a cut-off. That is exactly this neuron. The weights are learned from past loans that were repaid or not, and the cut-off is the bias, chosen from how much risk the bank accepts. Because the score is a plain weighted sum, the bank can tell a refused customer which facts counted against them.',
+      goesWrong:
+        'The kind of people applying changes over time, for example after a new product launch or a downturn, and a cut-off that was right last year approves too many risky loans. Teams track approval rates and repayment by month, and move the cut-off or retrain the weights when they drift. They also check that the score does not treat groups of customers unfairly.',
+      roles: 'Credit risk analyst, scorecard developer (data scientist), model validator, credit policy manager.',
+    },
     words: [
       { term: 'Perceptron', meaning: 'A neuron that adds up weighted inputs and answers 1 or 0 with a hard limit.' },
       { term: 'Weight vector W', meaning: 'One number per input that says how much that input counts. Drawn as the pink arrow.' },
@@ -31,7 +57,7 @@ export const perceptronLabs: Lab[] = [
       },
       {
         kind: 'fix',
-        text: 'Give the bias back and slide the line off the origin. Notice that W alone sets the direction of the line and b ÷ ‖W‖ sets how far it sits from the origin.',
+        text: 'Give the bias back and slide the line off the origin. Notice that W alone sets the direction of the line, and b divided by the length of W sets how far it sits from the origin. The Line from origin readout shows that distance.',
       },
       {
         kind: 'prove',
@@ -73,6 +99,30 @@ export const perceptronLabs: Lab[] = [
     topics: 'Learning rules, perceptron learning rule, constructing learning rules, unified learning rule',
     color: '#fb923c',
     equation: 'e = t − a;   W_new = W_old + e pᵀ;   b_new = b_old + e',
+    takeaway: 'The perceptron learns only from mistakes: add the input when it said no wrongly, subtract it when it said yes wrongly. It stops as soon as every example is right, even if only just.',
+    picture: [
+      { mark: 'Orange circles', meaning: 'Spam senders (target t = 1). In the textbook set, the t = 1 points.', color: '#fb923c' },
+      { mark: 'Blue squares', meaning: 'Genuine senders (target t = 0). In the textbook set, the t = 0 points.', color: '#38bdf8' },
+      { mark: 'Faint orange shading', meaning: 'The side of the line where the neuron answers 1 (spam).' },
+      { mark: 'White line', meaning: 'The decision boundary. It swings each time the weights change.', color: '#f8fafc' },
+      { mark: 'Grey lines through 0', meaning: 'The two axes through the origin, where the arrows start.' },
+      { mark: 'Pink arrow from the origin', meaning: 'The weight vector w, with its numbers in the label.', color: '#f472b6' },
+      { mark: 'Pulsing red ring', meaning: 'This sender is on the wrong side of the line right now.', color: '#fb7185' },
+      { mark: 'Pulsing ring around one point', meaning: 'The sample being shown. Green means the neuron was right and nothing changes; white means a mistake.', color: '#34d399' },
+      { mark: 'Dashed white arrow labelled p', meaning: 'The input vector of the sample being shown, drawn from the origin.' },
+      { mark: 'Faded pink arrow with a green "+ p" or red "− p" arrow at its tip', meaning: 'The old w and the change the rule makes: p is added (green) or subtracted (red) to give the new w.' },
+      { mark: 'Text banner at the top', meaning: 'The target, the answer, the error and what the rule does with it, for the sample being shown.' },
+      { mark: '"nudged" label', meaning: 'The sender you pushed a tiny step across the line.' },
+    ],
+    industry: {
+      setting: 'Email providers and messaging apps, spam and abuse team',
+      problem: 'Billions of messages arrive and a small share are spam or scams. Spammers change their wording every week, so a filter set once soon falls behind.',
+      howUsed:
+        'Each message is turned into numbers: which words appear, how many links, the sender’s history. A linear classifier gives each of these a weight and adds them up. When a user presses "Report spam" or "Not spam", that message is a mistake the filter made, and the weights are nudged with an update very like this rule. Correct messages leave the weights alone, so the filter keeps learning cheaply all day.',
+      goesWrong:
+        'Users mislabel messages, for example reporting a newsletter they signed up for, and a rule that trusts every label keeps swinging. Spammers also craft messages that sit just on the safe side of the line. Teams use variants that keep a safety gap from the line and average the weights over time, wait for several reports before acting, and test each new filter on a fixed set of checked messages before release.',
+      roles: 'Anti-abuse engineer, ML engineer, trust and safety analyst.',
+    },
     words: [
       { term: 'Learning rule', meaning: 'A recipe for changing the weights and bias so the network does its job better.' },
       { term: 'Supervised learning', meaning: 'Learning from examples that come with the correct answer (the target).' },
@@ -85,7 +135,7 @@ export const perceptronLabs: Lab[] = [
     steps: [
       {
         kind: 'explore',
-        text: 'Turn Auto-play off and press Next sample again and again. Predict before each press: will w change, and will p be added or subtracted? Then change the step size α and shuffle the order. Does it still finish?',
+        text: 'Turn Auto-play off and press Next sample again and again. Predict before each press: will w change, and will p be added or subtracted? Then change the step size α (how much of p is added or subtracted on each mistake) and shuffle the order. Does it still finish?',
       },
       {
         kind: 'break',
@@ -135,6 +185,30 @@ export const perceptronLabs: Lab[] = [
     topics: 'Multiple-neuron perceptron, training multiple-neuron perceptrons',
     color: '#a3e635',
     equation: 'a = hardlim(Wp + b);   e = t − a;   W_new = W_old + e pᵀ;   b_new = b_old + e   (W is S × R)',
+    takeaway: 'Several neurons side by side each answer their own yes or no question, so S neurons can name up to 2^S classes. Each question must still be one a straight line can answer.',
+    picture: [
+      { mark: 'Amber dots', meaning: 'Jalebi: sweet, not spicy. In the textbook set, class 3.', color: '#fbbf24' },
+      { mark: 'Rose dots', meaning: 'Samosa: spicy, not sweet. In the textbook set, class 2.', color: '#fb7185' },
+      { mark: 'Green dots', meaning: 'Chilli mango: sweet and spicy. In the textbook set, class 4.', color: '#a3e635' },
+      { mark: 'Blue dots', meaning: 'Idli: neither sweet nor spicy. In the textbook set, class 1.', color: '#38bdf8' },
+      { mark: 'Pink line', meaning: 'Neuron 1’s boundary, set by row 1 of W.', color: '#f472b6' },
+      { mark: 'Violet line', meaning: 'Neuron 2’s boundary, set by row 2 of W.', color: '#c4b5fd' },
+      { mark: 'Short arrows labelled "row 1" and "row 2"', meaning: 'Each points to the side of its line where that neuron answers 1.' },
+      { mark: 'Tinted background', meaning: 'The class whose code the two neurons give at that spot, in that class’s colour.' },
+      { mark: '"a = [1 0] jalebi" style labels', meaning: 'The output code of each region and the class it names.' },
+      { mark: 'Pulsing white ring', meaning: 'This snack gets the wrong code right now.', color: '#f8fafc' },
+      { mark: 'Large pulsing ring with "t, a, e" label', meaning: 'The snack being shown, with its target, the output and the error. Green ring means both neurons were right.', color: '#34d399' },
+      { mark: 'Table at the top right', meaning: 'The numbers in W and b, one row per neuron, and each row’s error. A row lights up while it changes; a green error is +1, a red one is −1.' },
+    ],
+    industry: {
+      setting: 'Online shops and customer-support teams, ticket and product tagging',
+      problem: 'Every incoming ticket or product listing needs several labels at once, such as "billing?", "urgent?", "refund?", so it reaches the right team quickly.',
+      howUsed:
+        'The team trains one linear unit per label, all reading the same features of the text. Each unit answers its own yes or no, and together they give a code of tags for the ticket. The same layout sits at the end of most large text and image networks: a final layer of linear units, one per class or label, reading the features the network has learned.',
+      goesWrong:
+        'A label that mixes unrelated cases, such as "other" or "needs a manager", asks one unit to group things that sit on opposite sides of the map, like the opposite corners in this station. That unit never settles and tags at random. Teams split such labels into clearer ones, add better features, or use a network with a hidden layer, and they measure accuracy for each label separately.',
+      roles: 'ML engineer, data scientist, support operations analyst, data annotation lead.',
+    },
     words: [
       { term: 'Multiple-neuron perceptron', meaning: 'Several perceptron neurons that all see the same inputs. Each has its own row of W and its own bias.' },
       { term: 'Row of W', meaning: 'The weights of one neuron, written ᵢw. Each row has its own decision boundary.' },
@@ -146,11 +220,11 @@ export const perceptronLabs: Lab[] = [
     steps: [
       {
         kind: 'explore',
-        text: 'Press Next sample and watch the matrix. Which row lights up, and which line moves? Drag a snack into another group\'s area and see which neuron has to learn again.',
+        text: 'Press Next sample and watch the table of weights at the top right. Which row lights up, and which line moves? Drag a snack into another group\'s area and see which neuron has to learn again.',
       },
       {
         kind: 'break',
-        text: 'Give opposite corners the same first bit. Now neuron 1 must put jalebi and samosa on one side and chilli mango and idli on the other. Watch row 1 change for ever while row 2 settles.',
+        text: 'Give opposite corners the same first bit, the first number in the code. Now neuron 1 must put jalebi and samosa on one side and chilli mango and idli on the other. Watch row 1 change for ever while row 2 settles.',
       },
       {
         kind: 'fix',
@@ -196,6 +270,30 @@ export const perceptronLabs: Lab[] = [
     topics: 'Proof of convergence, limitations of the perceptron, linear separability',
     color: '#f87171',
     equation: 'x = [w; b],  z = [p; 1]:   x_new = x_old + e z;   changes k ≤ ‖x*‖² Π / δ²,  Π = max ‖z‖²',
+    takeaway: 'If a straight line can split the data, the perceptron rule is sure to find one. If no line can, as with XOR, it never stops, and that is why networks need hidden layers.',
+    picture: [
+      { mark: 'Four lamps', meaning: 'The four switch positions: A down or up (across) and B down or up (upwards).' },
+      { mark: 'Glowing amber lamp marked ON', meaning: 'The light should be on for this switch position (target t = 1).', color: '#fbbf24' },
+      { mark: 'Dark lamp marked off', meaning: 'The light should be off for this switch position (target t = 0).', color: '#64748b' },
+      { mark: 'Faint amber shading', meaning: 'The side of the line where the perceptron says the light is on.' },
+      { mark: 'White line', meaning: 'The perceptron’s boundary right now.', color: '#f8fafc' },
+      { mark: 'Green dashed line', meaning: 'One known solution x*, a line that gets every lamp right. It is missing when no such line exists.', color: '#34d399' },
+      { mark: 'Pulsing red ring', meaning: 'The perceptron gets this lamp wrong right now.', color: '#fb7185' },
+      { mark: 'Expanding white ring', meaning: 'The lamp that was just shown to the learning rule.' },
+      { mark: 'Bar above the chart', meaning: 'Weight changes so far against the proof’s limit. Amber while running, green once training has stopped.', color: '#fbbf24' },
+      { mark: 'Green curve with dots', meaning: 'The angle between the current weights and the solution x* after each change. It falls as the rule closes in.', color: '#34d399' },
+      { mark: 'Red stepped line', meaning: 'Shown when no solution exists: how many lamps are wrong after each change. It never stays at 0.', color: '#fb7185' },
+      { mark: 'Green dashed line at 0 in the chart', meaning: 'Where the red line would have to stay for training to stop.' },
+    ],
+    industry: {
+      setting: 'Banks, insurers and online shops, any analytics team choosing a model',
+      problem: 'Before spending weeks on a complex model, the team needs to know whether a simple linear one is good enough.',
+      howUsed:
+        'Teams start with a linear model as a baseline. If it cannot even fit the training data, the classes are probably not separable by a line. A typical cause is an "either but not both" pattern, such as two account signals that are harmless when both are absent or both present, but suspicious when only one appears. The fix is the one this station points to: add a combined feature by hand, or use a network with a hidden layer that can draw several lines and combine them. This limit is the reason hidden layers exist.',
+      goesWrong:
+        'A plain perceptron trained on data that is not separable never finishes, so code that waits for zero mistakes hangs. Teams always cap the number of passes, keep the best weights seen so far, and watch the training error. An error that stays high on the training data itself is the sign that the model is too simple, not that it needs more time.',
+      roles: 'Data scientist, ML engineer, analytics lead.',
+    },
     words: [
       { term: 'Linearly separable', meaning: 'The two classes can be put on opposite sides of one straight line.' },
       { term: 'Solution vector x*', meaning: 'Any weights and bias that classify every sample correctly. There are many, or none.' },
@@ -208,7 +306,7 @@ export const perceptronLabs: Lab[] = [
     steps: [
       {
         kind: 'explore',
-        text: 'With "Both up", watch the green angle curve fall and the count of weight changes stay under the limit. Drag the ON lamp towards an off lamp and read the limit again.',
+        text: 'With "Both up", watch the green curve fall. It is the angle between the current weights and a known solution. Check that the count of weight changes stays under the proof’s limit. Drag the ON lamp towards an off lamp and read the limit again.',
       },
       {
         kind: 'break',
@@ -258,6 +356,31 @@ export const perceptronLabs: Lab[] = [
     topics: 'Linear associator, the Hebb rule, performance analysis, pseudoinverse rule',
     color: '#f0abfc',
     equation: 'a = Wp;   Hebb: W = T Pᵀ = Σ t_q p_qᵀ;   a = t_k (p_kᵀp_k) + Σ_{q≠k} t_q (p_qᵀp_k);   pseudoinverse: W = T P⁺,  P⁺ = (PᵀP)⁻¹Pᵀ',
+    takeaway: 'A weight matrix can store patterns and recall them. The Hebb rule is exact only when the patterns do not overlap; the pseudoinverse rule removes the overlap whenever the patterns are independent.',
+    picture: [
+      { mark: 'Amber pixels', meaning: 'Ink, value +1.', color: '#fbbf24' },
+      { mark: 'Dark pixels', meaning: 'Blank paper, value −1.', color: '#020617' },
+      { mark: 'Grey pixels', meaning: 'Value 0: unknown, such as the covered half of a damaged icon.', color: '#334155' },
+      { mark: 'Stored icons, one with a pink ring', meaning: 'The patterns kept in memory. The ringed one is the icon being recalled. Tap a pixel to redraw it.', color: '#f0abfc' },
+      { mark: 'Small square "the wall W"', meaning: 'All 36 × 36 weights, one tiny brick each: amber is a positive weight, dark a negative one, grey near zero.' },
+      { mark: '"p shown"', meaning: 'The icon given to the memory, clean or damaged.' },
+      { mark: '"a = Wp"', meaning: 'The memory’s raw answer.' },
+      { mark: '"the wanted part" (or "target t")', meaning: 'The share of the answer that is the right icon.' },
+      { mark: '"cross-talk" (or "error a − t")', meaning: 'What leaks in from the other stored icons, or with the pseudoinverse rule, what is still wrong. All grey means nothing leaked.' },
+      { mark: '"hardlims(a)" with a green or red frame', meaning: 'The answer with every pixel snapped to ink or paper. Green frame: it matches the stored icon. Red: some pixels are wrong.' },
+      { mark: 'Blue diagonal in the table', meaning: 'Each icon compared with itself. 1.00 means it has length 1.', color: '#38bdf8' },
+      { mark: 'Green 0.00 cells', meaning: 'The two icons do not overlap at all, so they cause no cross-talk.', color: '#34d399' },
+      { mark: 'Red cells', meaning: 'The two icons overlap. The deeper the red, the more one leaks into the other.', color: '#f43f5e' },
+    ],
+    industry: {
+      setting: 'Telecom equipment makers, instrument makers and analytics teams, signal processing and data fitting',
+      problem: 'Several signals or causes arrive mixed together, and the team needs to pull them apart or fit the best weights to noisy measurements.',
+      howUsed:
+        'Fitting a line or curve by least squares solves the same equation as this station, W = T P⁺, and every spreadsheet trend line and regression package does it. In wireless receivers with several antennas, the received signals are multiplied by the pseudoinverse of the channel matrix to separate the streams that were sent together. Search and recommendation systems match a query to stored items by inner product, which is the recall step of this memory, and overlapping items cause the same cross-talk.',
+      goesWrong:
+        'When two inputs are almost the same, like two sensors that always move together, the pseudoinverse becomes unstable and blows small noise up into large errors. Teams add a small penalty that keeps weights small (called regularisation), remove inputs that repeat each other, and check how well the result does on fresh measurements.',
+      roles: 'Signal processing engineer, RF engineer, data analyst, data scientist.',
+    },
     words: [
       { term: 'Linear associator', meaning: 'A layer with a linear transfer function, a = Wp. It links each input pattern to an output pattern.' },
       { term: 'Hebb rule', meaning: 'Strengthen a weight when its input and its output are active together. In matrix form W = T Pᵀ.' },
@@ -270,7 +393,7 @@ export const perceptronLabs: Lab[] = [
     steps: [
       {
         kind: 'explore',
-        text: 'With the signal flags, recall each one clean, half covered, and with flipped pixels. Check the table: every pair is 0.00. Tap pixels to redraw a flag and watch the table and the recall change.',
+        text: 'With the signal flags, recall each one clean, half covered, and with flipped pixels. Check the inner-product table: every pair of different flags is 0.00. Tap pixels to redraw a flag and watch the table and the recall change.',
       },
       {
         kind: 'break',

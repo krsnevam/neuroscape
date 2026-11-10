@@ -10,6 +10,9 @@ import { useAppStore } from '../store/useAppStore'
 import Label3D from '../components/Label3D'
 import FpsMeter from '../ui/FpsMeter'
 import QualityToggle from '../ui/QualityToggle'
+import WorldIntroPanel from '../ui/WorldIntroPanel'
+import DeveloperSignal from '../ui/DeveloperSignal'
+import { worldIntros } from '../data/worldIntros'
 
 const RADIUS = 6
 const CUBES = 27
@@ -144,6 +147,8 @@ export default function WorldFloor({ worldId }: { worldId: string }) {
   const isDone = (lab: Lab) => doneLabs.includes(`${worldId}/${lab.id}`)
   const done = labs.filter(isDone).length
   const [first, ...rest] = world.title.split(' ')
+  const intro = worldIntros[worldId]
+  const [showIntro, setShowIntro] = useState(false)
 
   return (
     <div className="relative h-full w-full">
@@ -188,12 +193,26 @@ export default function WorldFloor({ worldId }: { worldId: string }) {
           <p className="max-w-sm text-xs text-slate-400 sm:text-sm">
             {world.unit}: {world.topics}. Follow the belt, or walk into any station. {done} of {labs.length} proved.
           </p>
+          {intro && (
+            <button
+              type="button"
+              onClick={() => setShowIntro(true)}
+              className="pointer-events-auto mt-2 rounded-md border px-3 py-1.5 text-xs font-medium text-white backdrop-blur hover:bg-white/10"
+              style={{ borderColor: world.color, background: `${world.color}22` }}
+            >
+              {intro.button} →
+            </button>
+          )}
         </div>
-        <div className="pointer-events-auto flex shrink-0 items-center gap-3">
+        <div className="pointer-events-auto flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
           <FpsMeter />
           <QualityToggle />
+          <DeveloperSignal />
         </div>
       </header>
+      {intro && showIntro && (
+        <WorldIntroPanel intro={intro} worldId={worldId} labs={labs} color={world.color} onClose={() => setShowIntro(false)} />
+      )}
 
       <nav className="absolute inset-x-0 bottom-0 flex gap-2 overflow-x-auto p-3" aria-label="Stations">
         {labs.map((lab, i) => (

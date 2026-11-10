@@ -20,6 +20,12 @@ export interface Lab {
   topics: string
   color: string
   steps: LabStep[]
+  /** The one sentence to remember, shown in bold under the story */
+  takeaway?: string
+  /** A key to the picture: every mark, line and colour on the scene and what it means. Shown under "Read the picture". */
+  picture?: PictureKey[]
+  /** How this exact idea is used at work today. Shown under "In industry". */
+  industry?: LabIndustry
   /** Terms a first-time learner needs, in plain words. Shown under "Words to know". */
   words?: { term: string; meaning: string }[]
   /** The governing equation(s) in Hagan notation, shown under the story */
@@ -59,4 +65,26 @@ export const stepLabels: Record<StepKind, string> = {
   break: 'Break',
   fix: 'Fix',
   prove: 'Prove',
+}
+
+export interface PictureKey {
+  /** The mark as the learner sees it, e.g. "Blue dots" or "Thick grey curve" */
+  mark: string
+  /** What it means, in one plain sentence */
+  meaning: string
+  /** Optional swatch colour for the mark */
+  color?: string
+}
+
+export interface LabIndustry {
+  /** The kind of organisation and team, e.g. "Food delivery apps, delivery-time team" */
+  setting: string
+  /** The everyday business problem they face */
+  problem: string
+  /** How this station's idea is used to solve it, step by step in prose */
+  howUsed: string
+  /** A realistic way it goes wrong in practice, and what the team does about it */
+  goesWrong: string
+  /** Job titles of the people who do this work */
+  roles: string
 }

@@ -7,18 +7,20 @@ export const errorValleyLabs: Lab[] = [
     lecture: 'Unit III',
     title: 'Auto Meter Bowl',
     story:
-      'An auto fare depends on how far you go and how long you wait in traffic. A linear neuron learns the meter from 44 rides, one ride at a time. Its two weights are a position in this bowl. Height is the mean square error.',
+      'An auto fare depends on how far you go and how long you wait in traffic. A linear neuron learns the meter from 44 rides, one ride at a time. Its two weights are a position in this bowl. The height of the bowl is the mean square error: how wrong the neuron is on average.',
+    takeaway:
+      'A linear neuron’s error is a bowl with one bottom. LMS walks down it one example at a time, and the learning rate must stay below a limit set by the steepest side of the bowl.',
     topics: 'ADALINE, mean square error, LMS algorithm, stability bound',
     color: '#34d399',
     equation: 'a = Wp + b   F(x) = E[e²] = c − 2xᵀh + xᵀRx   LMS: W(k+1) = W(k) + 2α e(k) pᵀ(k)   0 < α < 1/λ_max',
     steps: [
       {
         kind: 'explore',
-        text: 'Tap the bowl to choose the starting weights and watch the yellow ball jitter down, one ride per step. Compare it with the smooth blue path. Then switch to "Sort cheap / costly" and compare the LMS line with the perceptron line in the small plot.',
+        text: 'Tap the bowl to choose the starting weights and watch the yellow ball jitter down, one ride per step. Compare it with the smooth blue path, which uses all 44 rides for every step. Then switch to "Sort cheap / costly" and compare the yellow LMS line with the pink dashed perceptron line in the small plot.',
       },
       {
         kind: 'break',
-        text: 'Raise α above 1/λ_max. Each correction now overshoots along the steep direction of the bowl and the ball climbs out and leaves the map.',
+        text: 'Raise α above 1/λ_max, the limit shown in the panel. Each correction now overshoots along the steep direction of the bowl and the ball climbs out and leaves the map.',
       },
       {
         kind: 'fix',
@@ -40,6 +42,28 @@ export const errorValleyLabs: Lab[] = [
       { term: 'Margin', meaning: 'The distance from the decision boundary to the nearest example. A larger margin tolerates more noise.' },
       { term: 'Learning rate α', meaning: 'How big a step the weights take for a given error.' },
     ],
+    picture: [
+      { mark: 'Coloured bowl', meaning: 'The mean square error for every pair of weights: w₁ for distance across, w₂ for waiting into the screen. Height and colour both mean error: blue is low, orange is high.' },
+      { mark: 'Faint white rings on the bowl', meaning: 'Lines of equal error, like contour lines on a map. Long, thin rings mean a long, narrow bowl.' },
+      { mark: 'White pin, x* = R⁻¹h', meaning: 'The bottom of the bowl: the best possible weights.' },
+      { mark: 'Pink lines through the bottom', meaning: 'The two main directions of the bowl. The short one labelled λ₂ is the steep direction; the long one labelled λ₁ is the shallow one.', color: '#f472b6' },
+      { mark: 'Yellow ball and trail', meaning: 'LMS: the weights after each single ride. The trail wobbles because each ride gives only a rough idea of downhill.', color: '#facc15' },
+      { mark: 'Small blue ball and trail', meaning: 'Exact steepest descent: uses all the rides for every step, so its path is smooth. Switch it off in the panel.', color: '#38bdf8' },
+      { mark: '"LMS left the map" in red', meaning: 'α is too large: every step overshot more than the last and the weights flew off.' },
+      { mark: 'Dots in the small plot', meaning: 'The rides, placed by distance (across) and waiting time (up). When predicting the fare, blue is a cheap ride, green average and orange costly. When sorting, orange is costly and blue is cheap.', color: '#fb923c' },
+      { mark: 'Pulsing yellow glow in the small plot', meaning: 'The ride the neuron has just learned from.' },
+      { mark: 'Yellow line in the small plot', meaning: 'Where the neuron’s answer is exactly average. When sorting, it is the LMS boundary between cheap and costly.', color: '#facc15' },
+      { mark: 'Pink dashed line in the small plot', meaning: 'The perceptron’s boundary on the same rides, shown only when sorting.', color: '#f472b6' },
+    ],
+    industry: {
+      setting: 'Phone, conferencing and telecom equipment makers, audio signal processing team',
+      problem: 'On a speakerphone or video call, the far person’s voice comes out of your loudspeaker, bounces round the room and goes back into your microphone. Without a fix they hear themselves echo a moment later.',
+      howUsed:
+        'An echo canceller is an ADALINE with many weights trained by LMS. Its inputs are the last few hundred samples of sound sent to the loudspeaker, and its target is what the microphone picks up. After every sample it updates its weights, so it learns how the room changes the sound, then subtracts its guess of the echo before the signal is sent. Most products use a version of LMS that divides the step by the loudness of the input, so a loud talker does not push α past the stable limit.',
+      goesWrong:
+        'When both people talk at once, your own voice looks like a large error, and the filter starts to learn the wrong thing and the echo comes back. Teams add a double-talk detector that freezes learning while both sides speak, and they test with recordings of real rooms, laptops and car cabins.',
+      roles: 'DSP (digital signal processing) engineer, audio firmware engineer, acoustic test engineer.',
+    },
     theory: {
       idea: 'An ADALINE is a single neuron with no squashing: its output is a weighted sum of its inputs. Because the output is linear in the weights, the mean square error is an exact quadratic bowl with one lowest point. The LMS rule walks down that bowl using only the error of the example in front of it, so it needs no stored data and no matrix inversion.',
       how: [
@@ -69,7 +93,9 @@ export const errorValleyLabs: Lab[] = [
     lecture: 'Unit III',
     title: 'Hum Remover',
     story:
-      'You are on a call and the mains hum of a nearby transformer leaks into your microphone. A second pickup hears only the hum. An ADALINE with a delay line learns to turn that reference into a copy of the hum and subtracts it.',
+      'You are on a call and the hum of a nearby transformer leaks into your microphone. A second pickup, placed by the transformer, hears only the hum. A single linear neuron (an ADALINE) with a delay line learns to turn that reference into a copy of the hum at your microphone, and subtracts it.',
+    takeaway:
+      'An adaptive filter can only cancel what the reference can explain. Give it a recording of the noise alone, and what is left over is the clean signal.',
     topics: 'Adaptive filtering, tapped delay line, adaptive noise cancellation',
     color: '#22d3ee',
     equation: 'a(k) = w₁ v(k) + w₂ v(k − D)   e(k) = t(k) − a(k) = restored signal   W(k+1) = W(k) + 2α e(k) pᵀ(k)',
@@ -80,7 +106,7 @@ export const errorValleyLabs: Lab[] = [
       },
       {
         kind: 'break',
-        text: 'Push α past the limit and the weights explode. Reset, then choose "No delay": with one weight the filter cannot shift the reference in time, so part of the hum always remains.',
+        text: 'Push α above the "Stable while α <" value in the panel and the weights blow up. Reset, then choose "No delay": with one weight the filter cannot shift the reference in time, so part of the hum always remains.',
       },
       {
         kind: 'fix',
@@ -101,6 +127,26 @@ export const errorValleyLabs: Lab[] = [
       { term: 'Phase', meaning: 'How far a wave is shifted in time. The hum reaches the microphone later than it reaches the reference pickup.' },
       { term: 'Uncorrelated', meaning: 'Two signals whose product averages to zero: knowing one tells you nothing about the other.' },
     ],
+    picture: [
+      { mark: 'Row of boxes at the top', meaning: 'The path of the signal: reference, delay line, ADALINE, subtract, restored signal.' },
+      { mark: 'Amber trace', meaning: 'What the microphone hears: the tune with the hum added.', color: '#fbbf24' },
+      { mark: 'Pink trace', meaning: 'The filter’s output: its guess of the hum, built from the reference.', color: '#f472b6' },
+      { mark: 'Faint thick white trace behind the pink one', meaning: 'The true hum at the microphone. When the pink trace covers it, the filter has learned.', color: '#f8fafc' },
+      { mark: 'Green trace', meaning: 'The restored signal: microphone minus the filter’s guess. This is what you listen to.', color: '#34d399' },
+      { mark: 'Faint thick white trace behind the green one', meaning: 'The clean tune, so you can see how much hum is still left.', color: '#f8fafc' },
+      { mark: 'Blue and violet lines in the bottom chart', meaning: 'The two weights changing over time.', color: '#38bdf8' },
+      { mark: 'Dashed blue and violet lines', meaning: 'The best possible value of each weight. The solid lines should settle on them.', color: '#c4b5fd' },
+      { mark: '"The weights left the map" in red', meaning: 'α is too large and the weights have grown without limit.' },
+    ],
+    industry: {
+      setting: 'Headphone makers and medical equipment makers, signal processing teams',
+      problem: 'Steady noise spoils the signal people care about: engine drone in a listener’s ears, or mains interference on a heart trace (ECG) whose signal is only a thousandth of a volt.',
+      howUsed:
+        'In noise-cancelling headphones a small microphone on the outside of each earcup hears the noise as the reference. An adaptive filter turns it into a guess of the noise that reaches the ear, and the speaker plays the opposite of that guess, updating its weights thousands of times a second. In ECG machines the reference is taken from the mains supply itself, and a two-weight filter like this one, a sine and its shifted copy, removes the 50 Hz hum while keeping the heartbeat.',
+      goesWrong:
+        'If the reference also picks up some of the wanted signal, the filter removes part of it too: a heartbeat gets distorted, or a voice is thinned out. Wind on the outer microphone makes noise that does not reach the ear the same way, so the filter adds noise instead of removing it. Teams place reference sensors carefully, keep α small, detect wind and lower the cancellation, and test against recordings from real flights, streets and wards.',
+      roles: 'DSP (digital signal processing) engineer, acoustic engineer, biomedical engineer, embedded firmware engineer.',
+    },
     theory: {
       idea: 'Put a tapped delay line in front of an ADALINE and you have an adaptive filter: its output is a weighted sum of the present and past values of its input. In a noise canceller the input is a reference that hears only the noise, and the target is the contaminated signal. LMS can only cancel what the reference can explain, so the error that is left over is the clean signal.',
       how: [
@@ -130,22 +176,24 @@ export const errorValleyLabs: Lab[] = [
     lecture: 'Unit III',
     title: 'Backprop, One Step at a Time',
     story:
-      'A fan regulator turns from p = −2 (slowest) to p = 2 (fastest), and the speed follows the curve g(p) = 1 + sin(πp/4). A 1-2-1 network learns the curve from single readings. Here is every number inside one learning step.',
+      'A fan regulator turns from p = −2 (slowest) to p = 2 (fastest), and the fan speed follows the curve g(p) = 1 + sin(πp/4). A small network, with one input, two hidden neurons and one output, learns that curve from one reading at a time. Every learning step is a story in two halves. First the signal travels forward through the network and comes out as a guess. Then the error in that guess is turned into blame, and the blame travels backward, layer by layer, so that each weight learns how much it was at fault and changes by that much. Here is every number in one step.',
+    takeaway:
+      'Signals go forward to make a guess. Blame for the error goes backward, layer by layer, and every weight changes in proportion to its share of the blame.',
     topics: 'Backpropagation algorithm, chain rule, backpropagating the sensitivities, vanishing gradient',
     color: '#a3e635',
     equation: 'aᵐ⁺¹ = fᵐ⁺¹(Wᵐ⁺¹aᵐ + bᵐ⁺¹)   sᴹ = −2Ḟᴹ(nᴹ)(t − a)   sᵐ = Ḟᵐ(nᵐ)(Wᵐ⁺¹)ᵀsᵐ⁺¹   Wᵐ ← Wᵐ − α sᵐ(aᵐ⁻¹)ᵀ   bᵐ ← bᵐ − α sᵐ',
     steps: [
       {
         kind: 'explore',
-        text: 'Use "Next step" to walk through the eight sub-steps of the first iteration and check each number against your own calculation. Then choose "Train fast" and watch the green curve settle on the white one.',
+        text: 'Use "Next step" to walk through the eight parts of the first learning step. Steps 1 to 3 carry the signal forward (green). Step 4 measures the error. Steps 5 and 6 carry the blame backward (pink). Steps 7 and 8 change the weights (amber). Check each number against your own calculation. Then choose "Train fast" and watch the green curve settle on the white dashed one.',
       },
       {
         kind: 'break',
-        text: 'Start with large weights. The hidden neurons sit on the flat ends of the logsig curve, their derivative is almost zero, and the sensitivities s¹ that reach layer 1 vanish. The curve stays a flat line.',
+        text: 'Start with large weights. Each hidden neuron is pushed to a flat end of its S-shaped curve, where its slope is almost zero. Blame is multiplied by that slope on its way back, so almost none reaches layer 1. Its weights hardly change and the green curve stays a flat line.',
       },
       {
         kind: 'fix',
-        text: 'Start with small weights so each neuron begins on the steep middle part of its curve. Train fast and compare how quickly the error falls.',
+        text: 'Start with small weights so each hidden neuron begins on the steep middle part of its S-shaped curve, where blame passes back easily. Train fast and compare how quickly the error falls.',
       },
       {
         kind: 'prove',
@@ -163,6 +211,28 @@ export const errorValleyLabs: Lab[] = [
       { term: 'Saturation', meaning: 'A neuron whose n is so large or so negative that its output is stuck near 1 or 0 and its slope is nearly zero.' },
       { term: 'Vanishing gradient', meaning: 'Sensitivities that shrink towards zero as they pass back through saturated or many layers, so early layers stop learning.' },
     ],
+    picture: [
+      { mark: 'Square on the left', meaning: 'The input: the regulator position p for this reading.' },
+      { mark: 'Two circles with an S-shaped curve', meaning: 'The two hidden neurons. The S shape is their logsig curve, which squashes any number to between 0 and 1.' },
+      { mark: 'Circle with a straight line', meaning: 'The output neuron. It is linear, so it passes its sum straight out as the guess a².' },
+      { mark: 'Grey lines with numbers', meaning: 'The wires and their weights. Numbers in grey beside each neuron are its bias b.' },
+      { mark: 'Green dots moving right and green numbers', meaning: 'The forward signal: n and a at each neuron as the guess is built.', color: '#34d399' },
+      { mark: 't and e at the far right', meaning: 'The target t is the true fan speed in white; the error e = t − a² is in red.', color: '#fb7185' },
+      { mark: 'Pink ring, pink dots moving left and pink numbers', meaning: 'The blame going backward: f′ is the slope of a neuron’s curve and s is its sensitivity, its share of the blame.', color: '#f472b6' },
+      { mark: 'Wires that flash amber', meaning: 'The weights being changed in this part of the step, with their new values.', color: '#fbbf24' },
+      { mark: 'White dashed curve and white dots in the plot', meaning: 'The true fan speed g(p), and the 21 regulator positions that readings are taken from.', color: '#f8fafc' },
+      { mark: 'Thick green curve in the plot', meaning: 'What the network currently answers for every regulator position.', color: '#34d399' },
+      { mark: 'Red vertical line in the plot', meaning: 'The error for this reading: from the pulsing white dot (the target) to the green dot (the guess).', color: '#fb7185' },
+    ],
+    industry: {
+      setting: 'Every team that trains neural networks: photo tagging, speech to text, translation, recommendations, medical imaging',
+      problem: 'A modern network has millions or billions of weights. After each batch of examples the team needs to know, for every single weight, which way to move it and by how much.',
+      howUsed:
+        'Engineers write only the forward pass: how the input becomes a guess. The deep learning library records each step, and when training it runs backpropagation automatically, sending blame back through every layer to give each weight its gradient. One backward pass costs about the same as one forward pass, which is why training huge networks is possible at all. Every modern network, from a phone’s face unlock to a translation system, is trained this way.',
+      goesWrong:
+        'In deep networks the blame can shrink to nothing or grow out of control as it passes back through many layers, so early layers stop learning or the run blows up. Teams use neuron curves that do not go flat (such as ReLU), start with carefully scaled random weights, add normalisation layers, cap the size of gradients, and plot the gradient size of each layer during training to spot the problem early.',
+      roles: 'ML engineer, research engineer, deep learning framework engineer.',
+    },
     theory: {
       idea: 'A multilayer network is a function inside a function, so the slope of the error with respect to an early weight is a product of slopes along the path to the output. Backpropagation computes all of these products in one sweep from the output back to the input, reusing each layer\'s result for the layer before it. Every weight then moves by −α times its neuron\'s sensitivity times the signal on its wire.',
       how: [
@@ -193,13 +263,15 @@ export const errorValleyLabs: Lab[] = [
     title: 'The Corridor Light, Solved',
     story:
       'The corridor light with two switches is back: the lamp is on when exactly one switch is up. One perceptron could not learn it. A hidden layer can: each hidden neuron draws a line and the output neuron combines them.',
+    takeaway:
+      'Each hidden neuron draws one straight line. The output neuron combines the lines into shapes that no single line could make.',
     topics: 'Multilayer perceptrons, pattern classification, batch and incremental training',
     color: '#4ade80',
     equation: 'a¹ = tansig(W¹p + b¹)   a² = logsig(W²a¹ + b²)   batch: one update per pass with the average gradient   incremental: one update per pattern',
     steps: [
       {
         kind: 'explore',
-        text: 'Watch two dashed lines swing into place and the orange region form between them. Try the ring and the two moons, add your own points by tapping, and add hidden neurons when the region cannot bend enough. Compare the two loss curves.',
+        text: 'Watch two dashed lines swing into place and the orange region form between them. Try the ring and the two moons, add your own points by tapping, and add hidden neurons when the region cannot bend enough. Compare the two error curves at the bottom.',
       },
       {
         kind: 'break',
@@ -225,6 +297,24 @@ export const errorValleyLabs: Lab[] = [
       { term: 'Incremental training', meaning: 'Updating the weights after every single pattern.' },
       { term: 'Symmetry breaking', meaning: 'Starting hidden neurons with different random weights so that they can learn different things.' },
     ],
+    picture: [
+      { mark: 'Orange dots', meaning: 'Points where the lamp should be ON. For XOR these are the two corners where exactly one switch is up.', color: '#fb923c' },
+      { mark: 'Blue dots', meaning: 'Points where the lamp should be OFF.', color: '#38bdf8' },
+      { mark: 'Pulsing red glow round a dot', meaning: 'A point the network currently gets wrong.', color: '#f43f5e' },
+      { mark: 'Shaded background', meaning: 'The network’s answer everywhere on the plane: orange where it says ON, blue where it says OFF. Stronger shading means a surer answer; faint means close to 0.5.' },
+      { mark: 'Dashed coloured lines h1, h2 and so on', meaning: 'One line per hidden neuron, where its net input is zero. Points on either side get opposite answers from that neuron.', color: '#f472b6' },
+      { mark: 'Thick green curve in the bottom chart', meaning: 'Batch training: the average error over all points, after each pass.', color: '#34d399' },
+      { mark: 'Thin yellow jagged curve', meaning: 'Incremental training: the error of each single point as it is shown, so it jumps up and down.', color: '#facc15' },
+    ],
+    industry: {
+      setting: 'Manufacturers, quality inspection team on the production line',
+      problem: 'Each part is measured by a few sensors, such as weight, thickness and vibration. A good part is not simply "above" or "below" one limit: a heavier part may be fine if it is also thicker, but not if it is thin. No single threshold or straight rule separates good from bad.',
+      howUsed:
+        'The team collects measurements of parts that inspectors have marked good or bad, and trains a small network with one hidden layer on them. The hidden neurons find the boundaries that matter and the output neuron combines them into an accept or reject region. Training uses small groups of examples per update, a middle way between the batch and incremental training shown here, with random starting weights so the hidden neurons differ.',
+      goesWrong:
+        'With too many hidden neurons the network draws a tight region round every mislabelled part and then rejects good parts on the line. Teams start with few hidden neurons, keep a set of parts the network never trains on to check it, and add neurons only while that check improves. They also send borderline parts to a human inspector.',
+      roles: 'Quality engineer, data scientist, manufacturing or process engineer, line inspector.',
+    },
     theory: {
       idea: 'A single neuron splits the plane with one straight line. A hidden layer draws several lines at once, and the output neuron combines the half-planes into bands, wedges and closed shapes. With enough hidden neurons a two-layer network can carve out any region, and backpropagation finds the lines from examples.',
       how: [
@@ -253,7 +343,9 @@ export const errorValleyLabs: Lab[] = [
     lecture: 'Unit III',
     title: 'Nandi Hills in Fog',
     story:
-      'You are cycling down from Nandi Hills in thick fog. You can feel the slope under your wheels but you cannot see the valley. This is the real error surface of a small network: flat plateaus, a steep ravine and a second valley that leads nowhere.',
+      'You are cycling down from Nandi Hills in thick fog. You can feel the slope under your wheels but you cannot see the valley. This is the real error surface of a small network, drawn over two of its weights: flat plateaus, a steep ravine and a second valley that leads nowhere.',
+    takeaway:
+      'A real error surface has flat stretches, narrow ravines and false valleys. Momentum and a changing learning rate fix slow and bouncy progress, but only a different start escapes a bad valley.',
     topics: 'Drawbacks of backpropagation, performance surface, convergence, momentum, variable learning rate',
     color: '#2dd4bf',
     equation: 'SDBP: Δx = −α g   MOBP: Δx(k) = γΔx(k−1) − (1−γ)α g(k)   VLBP: F up by more than ζ = 4 % → reject, α ← 0.7α, γ ← 0;  F down → accept, α ← 1.05α',
@@ -268,7 +360,7 @@ export const errorValleyLabs: Lab[] = [
       },
       {
         kind: 'fix',
-        text: 'Momentum and a variable learning rate cure oscillation and slowness, not a bad start. Start again from (−4, −4). In practice you train from several random starting points and keep the best.',
+        text: 'Momentum and a variable learning rate cure zig-zagging and slow progress, not a bad start. Start again from (−4, −4). In practice you train from several random starting points and keep the best.',
       },
       {
         kind: 'prove',
@@ -286,6 +378,29 @@ export const errorValleyLabs: Lab[] = [
       { term: 'Momentum γ (MOBP)', meaning: 'Keeping a fraction γ of the previous step, which smooths out a zig-zag path.' },
       { term: 'Variable learning rate (VLBP)', meaning: 'Raising α while the error falls and cutting it when a step makes the error rise.' },
     ],
+    picture: [
+      { mark: 'Coloured surface', meaning: 'The squared error for every value of two weights, w¹₁,₁ across and w²₁,₁ into the screen, with the other five weights fixed. Height and colour both mean error: blue is low, orange is high.' },
+      { mark: 'Faint white rings on the surface', meaning: 'Lines of equal error. Rings packed close together mean steep ground; rings far apart mean a flat plateau.' },
+      { mark: 'White pin, global minimum', meaning: 'The lowest point of the whole surface, at (10, 1), where the error is zero.' },
+      { mark: 'Pink pin, local minimum', meaning: 'The bottom of the false valley, shown in the wide view. Its error never falls below 0.093.', color: '#fda4af' },
+      { mark: 'Light green pin, start', meaning: 'The starting weights. Tap the surface to move it.', color: '#a7f3d0' },
+      { mark: 'Blue ball and trail', meaning: 'SDBP, steepest descent: a step straight downhill with a fixed α.', color: '#38bdf8' },
+      { mark: 'Amber ball and trail', meaning: 'MOBP, momentum: keeps part of its previous step, which smooths out a zig-zag.', color: '#fbbf24' },
+      { mark: 'Pink ball and trail', meaning: 'VLBP, variable learning rate: grows α while the error falls and cuts it when a step goes too far uphill.', color: '#f472b6' },
+      { mark: '"left the map" in the list', meaning: 'That rider took a step so large that its weights left the surface altogether.' },
+      { mark: 'Left chart, three coloured lines', meaning: 'The error of each rider at every iteration, on a log scale: each label up the axis is a thousand times more error than the one below.' },
+      { mark: 'Right chart, pink line', meaning: 'The learning rate VLBP has chosen for itself at every iteration.', color: '#f472b6' },
+      { mark: 'Dashed grey line in the right chart', meaning: 'The starting learning rate, which SDBP and MOBP keep the whole time.' },
+    ],
+    industry: {
+      setting: 'Companies that retrain models regularly: search ranking, recommendations, speech recognition, ad click prediction',
+      problem: 'A training run can take hours to days on costly hardware. A run that crawls across a plateau or bounces between ravine walls wastes that time, and a run that settles in a poor valley gives a weaker model.',
+      howUsed:
+        'Every training run uses momentum, either plain momentum or an optimiser such as Adam that is built on the same idea. Every run also follows a learning-rate schedule: a gentle warm-up at the start, then a steady decrease, or a cut whenever the validation error stops improving, which is the same idea as VLBP. For important models teams train from several random starting weights and keep the best.',
+      goesWrong:
+        'A run sits on a plateau and the error curve looks flat, so someone stops it too early, or a learning rate that is too high makes the error spike and the run fails. Teams try a small range of learning rates on a short run first, watch the error curve live, and save checkpoints so that a failed run can restart from just before the spike with a lower rate.',
+      roles: 'ML engineer, research engineer, MLOps engineer (runs the training infrastructure).',
+    },
     theory: {
       idea: 'A multilayer network\'s error surface is not a bowl. It has flat regions, steep narrow valleys and more than one minimum, so no single learning rate suits all of it. Momentum and a variable learning rate are two inexpensive changes to steepest descent that make it faster and steadier on such a surface. Neither can tell a local minimum from the global one.',
       how: [

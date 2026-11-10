@@ -36,6 +36,32 @@ export const neuronLabLabs: Lab[] = [
       },
       { term: 'Decision boundary', meaning: 'The line or curve where a sorter changes its answer from "not ready" to "ready".' },
     ],
+    takeaway:
+      'A hand-written rule stays fixed until a person changes it. A learned model finds its own rule from labelled examples, and a model with more than one layer of neurons can draw a curved boundary.',
+    picture: [
+      { mark: 'Three square charts', meaning: 'One per sorter: your rule, one neuron, and the 2-8-1 network. Colour runs across from green to yellow, softness runs up from hard to soft.' },
+      { mark: 'Mango-shaped dots', meaning: 'The 90 labelled mangoes of the crate. Each is filled green to yellow by its own colour.' },
+      { mark: 'Gold ring round a mango', meaning: 'A person labelled this mango ready to eat.', color: '#fbbf24' },
+      { mark: 'Dark ring round a mango', meaning: 'A person labelled this mango not ready.' },
+      { mark: 'Red cross', meaning: 'This sorter gives the wrong answer for this mango.', color: '#f43f5e' },
+      { mark: 'Yellow shaded area', meaning: 'Where that sorter says "ready". Brighter yellow means the learner is more sure.' },
+      { mark: 'Pink dashed lines, first chart', meaning: 'Your two thresholds: the least colour θ₁ and the least softness θ₂ a mango needs to count as ready.', color: '#f472b6' },
+      { mark: 'Blue line, second chart', meaning: 'The boundary the single neuron has learned. It is always straight.', color: '#38bdf8' },
+      { mark: 'Violet line, third chart', meaning: 'The boundary the 2-8-1 network has learned. It can bend.', color: '#a78bfa' },
+      { mark: 'White pulsing ring with a tag', meaning: 'Your test mango, the same in all three charts. The tag shows what each sorter says about it.' },
+      { mark: '"wrong of 90" above each chart', meaning: 'How many mangoes that sorter gets wrong. Green is few, amber is some, red is many.' },
+      { mark: 'Bars in the fourth panel (narrow screens)', meaning: 'The same wrong-answer counts as bars: pink for the rule, blue for the neuron, violet for the network.' },
+    ],
+    industry: {
+      setting: 'Food processors and fruit exporters, quality and grading team',
+      problem:
+        'Fruit, vegetables and grains must be graded by ripeness and defects before packing. Hand grading is slow and graders disagree, and each new variety or season looks a little different.',
+      howUsed:
+        'Cameras over the conveyor measure colour, size and blemishes. Teams often start with hand rules on those measurements. Experienced graders then label thousands of items, a model is trained on those labels, and it replaces the rules where the rules kept failing. When a new variety arrives, the team collects fresh labels and retrains instead of rewriting rules.',
+      goesWrong:
+        'A model trained on one season or one variety misgrades a new batch, much like the Alphonso rule on Langra. Changed lighting in the shed can do the same. Teams keep a grader checking a sample every shift, watch how often the model and the grader disagree, and retrain when that number rises.',
+      roles: 'Quality control engineer, machine vision engineer, data annotator (labels the examples), ML engineer.',
+    },
     theory: {
       idea: 'Artificial intelligence is any program that does a task needing judgement. In classic AI a person writes the rule. In machine learning the program is given labelled examples and adjusts its own weights until its answers match the labels. Deep learning is machine learning with several layers of neurons, so the network can build its own features and draw curved boundaries.',
       how: [
@@ -77,7 +103,7 @@ export const neuronLabLabs: Lab[] = [
     steps: [
       {
         kind: 'explore',
-        text: 'Move the two thresholds to write the best rule you can for the Alphonso crate. Then tap any chart to place a test mango and compare the three verdicts. Try all three crates.',
+        text: 'Move the two threshold sliders, the least colour and the least softness a mango needs to count as ready, to write the best rule you can for the Alphonso crate. Then tap any chart to place a test mango and compare the three verdicts. Try all three crates.',
       },
       {
         kind: 'break',
@@ -85,7 +111,7 @@ export const neuronLabLabs: Lab[] = [
       },
       {
         kind: 'fix',
-        text: 'Classic AI is fixed by a person: drag the colour threshold down to 0 so the rule stops looking at colour. Machine learning fixed itself from the new labels. Now open the mixed crate, where overripe fruit must also be rejected: only the multilayer network can bend its boundary around the good ones.',
+        text: 'A hand rule is fixed by a person: drag the colour threshold down to 0 so the rule stops looking at colour. The two learners fixed themselves from the new labels. Now open the mixed crate, where overripe fruit must also be rejected: only the 2-8-1 network, with its extra layer of 8 neurons, can bend its boundary around the good ones.',
       },
       {
         kind: 'prove',
@@ -116,6 +142,36 @@ export const neuronLabLabs: Lab[] = [
       { term: 'Output a', meaning: 'What the neuron sends on, a = f(n). In a real neuron this travels down the axon.' },
       { term: 'Dendrite', meaning: 'A branch of a real neuron that receives signals from other neurons. The model replaces it with an input line.' },
     ],
+    takeaway:
+      'A neuron multiplies each input by a weight, adds them up with a bias, and passes the total through a transfer function. The weights choose what matters and the bias sets how easily it says yes.',
+    picture: [
+      { mark: 'Yellow circles on the left', meaning: 'The inputs p: cloud cover, humidity and forecast. A brighter circle is a larger input. Drag one up or down to change it.', color: '#fde68a' },
+      { mark: 'Blue lines into the cell', meaning: 'Inputs with a positive weight, pushing towards yes. A thicker line is a larger weight.', color: '#38bdf8' },
+      { mark: 'Red lines into the cell', meaning: 'Inputs with a negative weight, pushing towards no. A thicker line is a larger weight.', color: '#fb7185' },
+      { mark: 'Thin grey dashed line', meaning: 'An input whose weight is 0, so the neuron ignores it.' },
+      { mark: 'White dots running along the lines', meaning: 'The signal w·p each input sends. Bigger dots carry a larger signal; no dots means nothing is sent.' },
+      { mark: 'Boxes on the lines ("w₁ = …")', meaning: 'The current weight of each input. Drag a box up or down to change it.' },
+      { mark: 'Box above the cell ("b = …")', meaning: 'The bias, added as if from an input that is always 1. Its line is blue when positive, red when negative.' },
+      { mark: 'Glowing pink circle with Σ', meaning: 'The cell body. It adds everything up and shows the net input n. It glows brighter when the output is larger.', color: '#e879f9' },
+      { mark: 'Small square with a curve', meaning: 'The transfer function f you chose, drawn in miniature.' },
+      { mark: 'Circle on the right', meaning: 'The output a. Green means yes, grey means no.', color: '#34d399' },
+      { mark: 'Umbrella', meaning: 'The decision in plain words: green "take it" or faded "leave it".' },
+      { mark: 'Labels "dendrites", "cell body", "axon"', meaning: 'Which part of a real nerve cell each piece of the model stands for.' },
+      { mark: 'Line of numbers under the neuron', meaning: 'The sum written out with the live values, then the output.' },
+      { mark: 'Pink curve in the lower chart', meaning: 'The transfer function: the output a for every possible net input n.', color: '#e879f9' },
+      { mark: 'White dot on the curve', meaning: 'Where the neuron is right now. The dashed lines read off its n and a.' },
+      { mark: 'Green dashed line', meaning: 'The yes level. An output above it reads as "take the umbrella".', color: '#34d399' },
+    ],
+    industry: {
+      setting: 'Banks and lenders, credit risk team',
+      problem:
+        'Thousands of loan applications arrive each week. The bank must decide quickly and fairly who is likely to repay, and must be able to explain each decision to the customer and to the regulator.',
+      howUsed:
+        'A credit scorecard is often exactly one logsig neuron, called logistic regression. Inputs such as income, existing loans and missed payments each get a weight, a bias is added, and the sigmoid turns the total into a chance of default. The weights are learned from past loans. Because each weight can be read directly, analysts check that every input pushes the right way before the model is approved.',
+      goesWrong:
+        'An input can quietly stand in for something unfair, such as a postcode that tracks a community, or the economy can shift so past loans no longer describe new ones. Teams review every weight, test outcomes separately for different groups of customers, and re-check the model against recent loans on a fixed schedule.',
+      roles: 'Credit risk analyst, data scientist, model validation analyst.',
+    },
     theory: {
       idea: 'An artificial neuron is a small calculator modelled loosely on a nerve cell. It multiplies each input by a weight, adds the results and a bias to get the net input n, and passes n through a transfer function to get the output a. The weights decide what the neuron pays attention to, the bias decides how easily it says yes, and the transfer function decides the shape of the response.',
       how: [
@@ -167,7 +223,7 @@ export const neuronLabLabs: Lab[] = [
       },
       {
         kind: 'prove',
-        text: 'A neuron has W = [3 2], b = 1.2 and input p = [−5 6]ᵀ. Find n, then a for hardlims, satlin and tansig.',
+        text: 'A neuron has W = [3 2], b = 1.2 and two inputs, p₁ = −5 and p₂ = 6 (written p = [−5 6]ᵀ). Find n, then the output a for three of the transfer functions on the buttons: hardlims, satlin and tansig.',
         answer:
           'n = 3(−5) + 2(6) + 1.2 = −1.8. hardlims gives a = −1, satlin gives a = 0 (it saturates at 0 for negative n), and tansig gives a = tanh(−1.8) = −0.9468. This is Hagan Problem P2.3.',
       },
@@ -191,6 +247,37 @@ export const neuronLabLabs: Lab[] = [
       { term: 'Delay block D', meaning: 'A box that holds a value for one time step: what goes in at time t comes out at t + 1.' },
       { term: 'Recurrent network', meaning: 'A network whose output is fed back to its own input through a delay, so it changes over time.' },
     ],
+    takeaway:
+      'Neurons work in layers, and each layer feeds the next. Extra layers only add power when they use a curved transfer function; all-linear layers collapse into one.',
+    picture: [
+      { mark: 'Yellow-edged squares on the left', meaning: 'The three inputs: hunger, budget and time, each from −1 (low) to +1 (high).', color: '#fde68a' },
+      { mark: 'Violet-edged circles', meaning: 'Neurons. Each column is one layer; the last column has one neuron per dish.', color: '#a78bfa' },
+      { mark: 'Blue or red fill inside a circle', meaning: 'That neuron’s output: blue is positive, red is negative, and a stronger colour is a larger value.' },
+      { mark: 'Blue lines between columns', meaning: 'Positive weights. A thicker line is a larger weight.', color: '#38bdf8' },
+      { mark: 'Red lines between columns', meaning: 'Negative weights. A thicker line is a larger weight.', color: '#fb7185' },
+      { mark: 'Glowing dots moving along the lines', meaning: 'The signal passing through one layer at a time, light blue for positive and pink for negative. A flash on a column marks the moment it arrives.' },
+      { mark: 'Gold ring and ★ on a dish', meaning: 'The dish with the largest output: the app’s suggestion.', color: '#fde68a' },
+      { mark: 'Heading at the top', meaning: 'The short name of the network (such as 3 – 4 – 3) and its parameter count worked out.' },
+      { mark: 'Captions under each layer', meaning: 'The size of that layer’s weight matrix and bias, and how many parameters it has.' },
+      { mark: 'Card at the bottom, green title', meaning: 'Multiplying the weight matrices together gives different answers from the real network, so the layers are doing real work.', color: '#34d399' },
+      { mark: 'Card at the bottom, amber title', meaning: 'Every layer is linear, so the single layer shown gives exactly the same answers as the whole network.', color: '#fbbf24' },
+      { mark: 'Recurrent view: loop of boxes', meaning: 'The output goes through the weights W, the adder +, and satlins, then round the loop back to the start.' },
+      { mark: 'Amber box D on the loop', meaning: 'The delay block. It holds the output for one time step before feeding it back.', color: '#fbbf24' },
+      { mark: 'White dot travelling round the loop', meaning: 'One trip round the loop is one time step.' },
+      { mark: 'Boxes a(t) and a(t+1)', meaning: 'The two friends’ opinions now and at the next step.' },
+      { mark: 'Blue line in the time chart', meaning: 'Friend 1’s opinion at each step, from −1 (mess) to +1 (canteen).', color: '#38bdf8' },
+      { mark: 'Amber line in the time chart', meaning: 'Friend 2’s opinion at each step.', color: '#fbbf24' },
+    ],
+    industry: {
+      setting: 'Food delivery, shopping and video apps, recommendations team',
+      problem:
+        'Each user sees only a few items on the first screen out of thousands on offer. Showing the wrong ones means fewer orders, and the answer must come back in a few milliseconds.',
+      howUsed:
+        'A multilayer network takes facts about the user (past orders, time of day, location) and about each item, passes them through a few hidden layers with a curved transfer function, and gives each item a score. The highest scores are shown first. Engineers choose the number of layers and neurons by counting parameters and the time per request, just as this station counts them.',
+      goesWrong:
+        'Teams sometimes grow the network wider and deeper for a tiny gain in accuracy, and then it is too slow or too costly to run at the busy dinner hour. They compare every large model against a smaller one on the same test, measure the time per request, and shrink the model when the extra layers do not pay for themselves.',
+      roles: 'ML engineer, recommendation systems engineer, backend engineer.',
+    },
     theory: {
       idea: 'A layer is a row of S neurons that all look at the same inputs, each with its own weights, so the weights form a matrix W with S rows. Feeding the outputs of one layer into the next gives a multilayer network. If an output is fed back to the input through a delay, the network becomes recurrent and its state changes from one time step to the next.',
       how: [
@@ -236,7 +323,7 @@ export const neuronLabLabs: Lab[] = [
       },
       {
         kind: 'break',
-        text: 'Make every layer linear (purelin). The app multiplies the weight matrices together and shows one single layer that gives exactly the same outputs. The extra layers bought nothing.',
+        text: 'Make every layer linear (purelin), so each layer only multiplies and adds, with no bend. The app multiplies the weight matrices together and shows one single layer that gives exactly the same outputs. The extra layers bought nothing.',
       },
       {
         kind: 'fix',
@@ -269,6 +356,35 @@ export const neuronLabLabs: Lab[] = [
       { term: 'Hopfield network', meaning: 'One recurrent layer that starts at the input and moves, step by step, until it rests on a stored prototype.' },
       { term: 'Hamming distance', meaning: 'The number of elements in which two ±1 vectors differ.' },
     ],
+    takeaway:
+      'Three ways to recognise a pattern: draw one boundary (perceptron), pick the closest stored example (Hamming), or let the input settle onto a stored example (Hopfield). All three struggle when the input sits exactly halfway.',
+    picture: [
+      { mark: 'Conveyor belt and item at the top', meaning: 'The item being sorted. Golden with dark specks and a hole looks rough like a vada; pale and plain looks smooth like an idli. Its size follows the weight reading and its shape the shape reading.' },
+      { mark: 'Three glowing sensor lights', meaning: 'The readings p₁ shape, p₂ texture and p₃ weight. Blue is a positive reading, red a negative one.' },
+      { mark: 'Grey cube, panel a', meaning: 'Every possible set of three readings, each from −1 to +1. Drag across the panel to turn it.' },
+      { mark: 'Pink plane, panel a', meaning: 'The perceptron’s boundary, where texture is 0. Smooth side is idli, rough side is vada. It pulses when the input lies on it.', color: '#f472b6' },
+      { mark: 'Pink arrow W', meaning: 'The perceptron’s weights. It points to the idli side, at right angles to the plane.', color: '#f472b6' },
+      { mark: 'Amber dot', meaning: 'The vada prototype, the perfect vada.', color: '#f59e0b' },
+      { mark: 'Pale grey dot', meaning: 'The idli prototype, the perfect idli.', color: '#e2e8f0' },
+      { mark: 'White pulsing dot with a dashed line', meaning: 'The current input p. The dashed line drops to the plane; its length is the size of n.' },
+      { mark: 'Amber and pale bars, panel b', meaning: 'The Hamming scores for vada and idli at the current step. The larger one is winning.' },
+      { mark: 'Dashed white outline on the bars', meaning: 'The first-layer score a¹: how well the input matched each prototype before the competition started.' },
+      { mark: 'Chart in panel b', meaning: 'Each score step by step: amber for vada, pale for idli. The loser falls to 0.' },
+      { mark: 'Three bars, panel c', meaning: 'The Hopfield outputs for shape, texture and weight. Blue is positive, red is negative.' },
+      { mark: '▼ and ▲ marks on those bars', meaning: 'Where the vada prototype (amber ▼) and the idli prototype (pale ▲) sit for each feature.' },
+      { mark: 'Pink, green and violet lines, panel c', meaning: 'The three Hopfield outputs a₁, a₂ and a₃ step by step, until they stop on a prototype.' },
+      { mark: 'Strip at the bottom of each panel', meaning: 'That network’s answer, written in amber for vada or pale grey for idli. Yellow text means still deciding, red means no answer.' },
+    ],
+    industry: {
+      setting: 'Food and packaging plants, line automation team. The closest-match idea also lives in phone and network chips and in product search.',
+      problem:
+        'Items on a fast belt must be pushed to the right bin from a few noisy sensor readings, in a fraction of a second, with simple hardware.',
+      howUsed:
+        'Many sorting gates are a perceptron in all but name: a weighted sum of a few readings compared with a threshold, programmed into the line controller. Closest-prototype matching, the first Hamming layer, is used when there are several product types: each type is stored as a reference reading and the item goes to the nearest one. The same closest-match job decodes noisy bits in phone and wifi chips, and a version of it finds the catalogue item nearest to a shopper’s photo in product search. Hopfield-style settling is rarely used directly on lines today.',
+      goesWrong:
+        'An item that reads halfway between two classes, or a new product type with no prototype, is still forced into one bin with no warning. Teams add a "not sure" bin for items close to the boundary or with a weak best match, send those to a person, and add a new prototype when a new product appears.',
+      roles: 'Automation and controls engineer, line controller programmer, quality engineer, search engineer.',
+    },
     theory: {
       idea: 'Pattern recognition means deciding which known class an input belongs to. A perceptron draws one flat boundary between the classes. A Hamming network compares the input with every stored prototype and lets the best match win. A Hopfield network starts at the input and moves, step by step, until it rests on a stored prototype.',
       how: [
@@ -309,19 +425,19 @@ export const neuronLabLabs: Lab[] = [
     steps: [
       {
         kind: 'explore',
-        text: 'Pick an item or spoil the sensor readings with the sliders. Press Step and follow the numbers: the perceptron answers at once, the Hamming scores compete, the Hopfield state slides to a prototype.',
+        text: 'Pick an item or spoil the sensor readings with the sliders. Press Step and follow the numbers: the perceptron answers at once, the Hamming scores compete, and the Hopfield outputs slide, step by step, to a prototype.',
       },
       {
         kind: 'break',
-        text: 'Send an item whose texture reads exactly 0: halfway between idli and vada. The perceptron sits on its boundary, the two Hamming neurons shrink together to zero, and the Hopfield state never moves.',
+        text: 'Send an item whose texture reads exactly 0: halfway between idli and vada. The perceptron sits on its boundary, the two Hamming neurons shrink together to zero, and the Hopfield outputs never move.',
       },
       {
         kind: 'fix',
-        text: 'Nudge the texture reading to 0.2. A small lean is enough: the feedback in the two recurrent networks makes it grow at every step until the answer is clear.',
+        text: 'Nudge the texture reading to 0.2. A small lean is enough: the Hamming and Hopfield networks feed their outputs back in at every step, so the lean grows each time until the answer is clear.',
       },
       {
         kind: 'prove',
-        text: 'An oblong vada gives p = [−1 −1 −1]ᵀ. Work out the Hamming network by hand: a¹, then a²(1) and a²(2) with ε = 0.5.',
+        text: 'An oblong vada gives p = [−1 −1 −1]ᵀ. Work out the Hamming network by hand: a¹, then a²(1) and a²(2) with ε = 0.5 (each neuron pushes the other down by half of the other’s value).',
         answer:
           'W¹ has rows [1 −1 −1] and [1 1 −1], b¹ = [3 3]ᵀ, so a¹ = [(1+1+1)+3, (−1−1+1)+3]ᵀ = [4 2]ᵀ. Then a²(1) = poslin([4 − 0.5·2, 2 − 0.5·4]ᵀ) = [3 0]ᵀ and a²(2) = [3 0]ᵀ. Only neuron 1 is left, so it is a vada. These are the numbers of Hagan Chapter 3 for the oblong orange.',
       },
@@ -345,6 +461,32 @@ export const neuronLabLabs: Lab[] = [
       { term: 'Spurious state', meaning: 'A stable state that is not one of the stored pictures, usually a blend of several.' },
       { term: 'Capacity', meaning: 'How many pictures can be stored before recall fails: roughly 0.14 N for N neurons, so about 9 here.' },
     ],
+    takeaway:
+      'A Hopfield network stores pictures as valleys in an energy landscape and repairs a damaged picture by rolling downhill. Store too many and the valleys merge into wrong blends.',
+    picture: [
+      { mark: 'Large 8×8 grid', meaning: 'The network’s state: 64 neurons, one per cell. Tap or drag to draw your own picture.' },
+      { mark: 'Orange cells', meaning: 'Lit neurons, value +1. Dark cells are −1.', color: '#fdba74' },
+      { mark: 'Red dot in a cell', meaning: 'That pixel differs from the picture you started from. Recall should clear them.', color: '#f43f5e' },
+      { mark: 'White flash on a cell', meaning: 'That neuron has just flipped.' },
+      { mark: 'White frame on a cell', meaning: 'The neuron being updated right now.' },
+      { mark: 'Small pictures in the "Stored" card', meaning: 'Every picture held in the weights. The one closest to the grid is orange with a white frame.' },
+      { mark: 'Number under each stored picture', meaning: 'How many of the 64 pixels on the grid match that picture.' },
+      { mark: 'Thin bar under the "Stored" title', meaning: 'How full the memory is. Green while within capacity, red when overloaded. The white tick marks the limit of about 9.', color: '#34d399' },
+      { mark: 'Orange staircase in the energy chart', meaning: 'The energy after each neuron update. It steps down when a neuron flips and never goes up.', color: '#fdba74' },
+      { mark: 'White dot at the end of the staircase', meaning: 'The energy right now.' },
+      { mark: 'Green dashed line', meaning: 'The energy of the clean picture you started from: the bottom of the valley recall should reach.', color: '#34d399' },
+      { mark: 'Message in the energy chart', meaning: 'Once recall stops it says whether the state is a stored picture, a negative image, or a wrong blend.' },
+    ],
+    industry: {
+      setting: 'Search, photo and language-model teams. Classic Hopfield networks are rarely deployed today; the idea of searching memory by content is everywhere.',
+      problem:
+        'Find the stored item that best matches a partial or noisy query, such as a cropped photo or half a sentence, without knowing where it is stored.',
+      howUsed:
+        'Photo and product search store each item as a list of numbers and return the stored items closest to the query, which is recall by content. Inside the language models that many apps now use, the attention step compares the current word with everything stored so far and blends the best matches. Researchers have shown that this step is the update of a modern Hopfield network with a far larger capacity than the one here.',
+      goesWrong:
+        'Like an overloaded Hopfield network, a memory full of very similar items can return a blend or the wrong near-match. Teams remove duplicates, keep stored items distinct, set a minimum match score below which nothing is returned, and check retrieved results against the original source.',
+      roles: 'Search engineer, ML research engineer, data engineer.',
+    },
     theory: {
       idea: 'A Hopfield network is a single layer in which every neuron is connected to every other one. Storing a picture carves a valley into an energy landscape. Starting from a damaged picture, the neurons update one at a time, the energy can only go down, and the state rolls into the nearest valley. You find a memory by its content, not by an address.',
       how: [

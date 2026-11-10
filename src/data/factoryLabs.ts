@@ -1,6 +1,7 @@
 /** World 5, the Model Factory: one hands-on station per Unit V lecture, each built on an everyday example. */
 import type { Lab } from './labs'
 import { factoryTheory } from './factoryTheory'
+import { factoryExplain } from './factoryExplain'
 
 const stations: Lab[] = [
   {
@@ -349,4 +350,4 @@ const stations: Lab[] = [
   },
 ]
 
-export const factoryLabs: Lab[] = stations.map((lab) => ({ ...lab, ...factoryTheory[lab.id] }))
+export const factoryLabs: Lab[] = stations.map((lab) => ({ ...lab, ...factoryTheory[lab.id], ...factoryExplain[lab.id] }))

@@ -8,6 +8,7 @@ import { useAppStore } from '../../store/useAppStore'
 import Portal from './Portal'
 import QualityToggle from '../../ui/QualityToggle'
 import FpsMeter from '../../ui/FpsMeter'
+import DeveloperSignal from '../../ui/DeveloperSignal'
 
 const RADIUS = 5
 
@@ -110,9 +111,10 @@ export default function HubScene() {
           </h1>
           <p className="text-xs text-slate-400 sm:text-sm">Walk inside neural networks. Tap a world to enter.</p>
         </div>
-        <div className="pointer-events-auto flex items-center gap-3">
+        <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
           <FpsMeter />
           <QualityToggle />
+          <DeveloperSignal />
         </div>
       </header>
 
