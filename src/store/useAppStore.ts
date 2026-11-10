@@ -13,6 +13,9 @@ interface AppState {
   /** Worlds the student has entered at least once */
   visited: string[]
   markVisited: (id: string) => void
+  /** Factory stations whose Prove step the student has completed */
+  doneLabs: string[]
+  markLabDone: (id: string) => void
 }
 
 const defaultQuality = (): Quality => {
@@ -32,10 +35,13 @@ export const useAppStore = create<AppState>()(
       visited: [],
       markVisited: (id) =>
         set((s) => (s.visited.includes(id) ? s : { visited: [...s.visited, id] })),
+      doneLabs: [],
+      markLabDone: (id) =>
+        set((s) => (s.doneLabs.includes(id) ? s : { doneLabs: [...s.doneLabs, id] })),
     }),
     {
       name: 'neuroscape',
-      partialize: (s) => ({ quality: s.quality, visited: s.visited }),
+      partialize: (s) => ({ quality: s.quality, visited: s.visited, doneLabs: s.doneLabs }),
     },
   ),
 )

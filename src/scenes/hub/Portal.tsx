@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
 import type { Group, Mesh } from 'three'
 import type { World } from '../../data/worlds'
+import Label3D from '../../components/Label3D'
 
 interface Props {
   world: World
@@ -74,17 +74,13 @@ export default function Portal({ world, position, visited, lowQuality, onEnter, 
         <meshStandardMaterial color={world.color} wireframe emissive={world.color} emissiveIntensity={1} />
       </mesh>
 
-      <Html position={[0, 1.55, 0]} center distanceFactor={9} zIndexRange={[10, 0]}>
-        <div className="pointer-events-none w-40 select-none text-center">
-          <div className="text-[10px] uppercase tracking-widest text-slate-400">
-            World {world.number} · {world.unit}
-          </div>
-          <div className="text-sm font-semibold text-white" style={{ textShadow: `0 0 12px ${world.color}` }}>
-            {world.title}
-          </div>
-          {visited && <div className="text-[10px] text-emerald-400">✓ visited</div>}
-        </div>
-      </Html>
+      <Label3D
+        position={[0, 1.65, 0]}
+        lines={[
+          { text: `WORLD ${world.number} · ${world.unit.toUpperCase()}${visited ? ' ✓' : ''}`, color: '#94a3b8', size: 10, mono: true },
+          { text: world.title, size: 14, bold: true },
+        ]}
+      />
     </group>
   )
 }

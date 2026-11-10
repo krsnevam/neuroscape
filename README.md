@@ -21,10 +21,10 @@ src/
   engine/tests/    checks against Hagan worked examples
   scenes/hub/      world-selection lobby
   scenes/<world>/  one folder per world (neuron-lab, perceptron, error-valley, competitive, factory)
-  components/      shared 3D parts
-  ui/              overlay controls, equation view, charts
+  components/      shared 3D parts (Label3D)
+  ui/              overlay controls; ui/lab is the frame and plots shared by every station
   modes/           explore, quest, challenge, teacher, exam
-  data/            world list, datasets, quest scripts, exam questions
+  data/            world list, station stories and mission steps
   store/           Zustand state
 ```
 
@@ -34,13 +34,30 @@ src/
 |---|--------|--------|
 | 1 | Project setup: Vite, React, TS, R3F, Tailwind, PWA, 3D hub with five portals | Done |
 | 2 | NN engine core: transfer functions, neuron, layer, forward pass, tests | Done |
-| 3 | Shared 3D components: NeuronMesh, weighted connections, DataCloud, Surface3D | Next |
-| 4 | Control panel and equation view | |
-| 5 | World 5, L35–L37: data station, architecture playground, training station | |
-| 6 | World 5, L38–L42: analysis room, overfitting, case studies, Beat the Model | |
-| 7 | Quest engine (Explore, Play, Break, Fix, Prove) | |
-| 8 | Worlds 3, 1, 2, 4 | |
-| 9–11 | Challenge, Teacher mode, AR, sound, badges, exam prep | |
+| 3 | Shared lab kit: station frame, mission steps, live 2D plots, 3D labels | Done |
+| 4 | Engine training: backpropagation, momentum, Levenberg-Marquardt, SOM, analysis helpers, tests | Done |
+| 5 | World 5 (Model Factory): nine hands-on stations for L35 to L42 | Done, needs testing on phones |
+| 6 | Quest engine shared by all worlds, Beat the Model challenge | |
+| 7 | Worlds 3, 1, 2, 4 | |
+| 8–10 | Challenge, Teacher mode, AR, sound, badges, exam prep | |
+
+## World 5: the Model Factory
+
+Open `/#/world/factory`. Each station is built on an everyday example and follows Explore, Break, Fix, Prove. All training runs live in the browser with the engine in `src/engine`.
+
+| Lecture | Station | Everyday example | Unit V topic |
+|---------|---------|------------------|--------------|
+| L35 | Silk Board Sampler | Minutes to cross Silk Board junction by hour of day | Selection of data, sampling, three-way split |
+| L36 | Thermistor Bench | Calibrating an Arduino thermistor reading (0 to 1023) | Preprocessing, choice of architecture |
+| L37 | Error Valley Race | Will you stay awake in the 8 am class? Three algorithms race on the error surface | Initialisation, training algorithm, stopping |
+| L38 | UPI Fraud Alarm | Flagging fraudulent payments when only 6% are fraud | Post-training analysis, confusion matrix, ROC |
+| L39 | Battery Oracle | Predicting when your phone battery dies from a few readings | Overfitting and extrapolation |
+| L40 | Chase Predictor | Win probability in the last overs of a T20 chase | Function approximation, probability estimation |
+| L41 | Doodle Reader | Teaching a network your own circle, cross and tick | Pattern recognition case study |
+| L41 | Colour Map | A self-organising map of the colours in a camera picture | Clustering case study |
+| L42 | Finish My Move | Forecasting your finger or phone-tilt rhythm | Prediction case study |
+
+The camera, photo and phone-tilt inputs need HTTPS (or localhost) and the user's permission; every station also works without them.
 
 ## Acceptance checks (every module)
 
