@@ -46,7 +46,7 @@ const stations: Lab[] = [
   },
   {
     id: 'sensor',
-    lecture: 'L36',
+    lecture: 'L35–36',
     title: 'Thermistor Bench',
     story:
       'A ₹10 thermistor on an Arduino analog pin gives a number from 0 to 1023, and that number is a badly curved function of temperature. Calibrate it with a network.',
@@ -99,6 +99,9 @@ const stations: Lab[] = [
       { term: 'Plateau', meaning: 'A flat region where the slope is almost zero and learning crawls.' },
       { term: 'Stability limit', meaning: 'For a quadratic surface, steepest descent diverges when α exceeds 2/λ_max.' },
       { term: 'Initial weights', meaning: 'Where the ball starts. Different starts can give different results.' },
+      { term: 'Symmetry', meaning: 'Hidden neurons that start with the same weights get the same update every time, so they stay copies of each other.' },
+      { term: 'Nguyen-Widrow', meaning: 'A starting rule that spreads the hidden neurons across the input range, so each begins with its own part of the job.' },
+      { term: 'Stopping criteria', meaning: 'The rules that end training: goal met, gradient too small, validation error stopped improving, or iteration limit reached.' },
     ],
     steps: [
       {
@@ -107,11 +110,11 @@ const stations: Lab[] = [
       },
       {
         kind: 'break',
-        text: 'Switch to the linear neuron and raise α past the stability limit: steepest descent bounces higher each step and leaves the map. With the sigmoid neuron, start on a flat plateau and watch it crawl.',
+        text: 'Switch to the linear neuron and raise α past the stability limit: steepest descent bounces higher each step and leaves the map. With the sigmoid neuron, start on a flat plateau and watch it crawl. Then set View to "Starting weights" and choose "All zero", then "All equal": a 6-neuron network that cannot use its neurons.',
       },
       {
         kind: 'fix',
-        text: 'Lower α below the limit, add momentum, and normalise the input so the narrow ravine opens into a bowl.',
+        text: 'Lower α below the limit, add momentum, and normalise the input so the narrow ravine opens into a bowl. In "Starting weights", choose "Small random" or "Nguyen-Widrow" and read "Why it stopped" for each run.',
       },
       {
         kind: 'prove',
@@ -119,11 +122,17 @@ const stations: Lab[] = [
         answer:
           'α < 2/λ_max. The linear neuron has a quadratic error surface, and LM with small μ is a Gauss-Newton step, which jumps straight to the minimum of a quadratic.',
       },
+      {
+        kind: 'prove',
+        text: 'A 1-6-1 network with tansig hidden neurons starts with every weight and bias at zero. Which parameters have a non-zero gradient? What does the trained network output, and which stopping criterion ends the run?',
+        answer:
+          'Only the output bias b². Each hidden output is a¹ = tansig(0) = 0, so the gradient for W² (s² a¹) is zero; W² = 0, so the sensitivity passed back, s¹ = Ḟ¹(W²)ᵀs², is zero and W¹, b¹ never move. b² moves to the mean of the targets, the output is that constant, and the run stops on the minimum-gradient criterion. Small random weights break the tie.',
+      },
     ],
   },
   {
     id: 'fraud',
-    lecture: 'L38',
+    lecture: 'L38–39',
     title: 'UPI Fraud Alarm',
     story:
       'A bank asks you to flag fraudulent UPI payments. About 6 in every 100 are fraud. Your network scores a very high accuracy on day one. Should the bank be happy?',
@@ -162,7 +171,7 @@ const stations: Lab[] = [
   },
   {
     id: 'battery',
-    lecture: 'L39',
+    lecture: 'L39–40',
     title: 'Battery Oracle',
     story:
       'You noted your phone battery a few times since morning. Can a network tell you when it will die tonight? Tap the chart to add your own readings.',
@@ -176,11 +185,15 @@ const stations: Lab[] = [
       { term: 'Early stopping', meaning: 'Keeping the weights from the moment the validation error was lowest.' },
       { term: 'Weight decay', meaning: 'A penalty on large weights, which keeps the curve smooth.' },
       { term: 'Extrapolation', meaning: 'Predicting outside the range of the training data. No setting fixes it; only data does.' },
+      { term: 'Regression plot', meaning: 'Network outputs drawn against the measured targets. A perfect network puts every dot on the line a = t.' },
+      { term: 'R value', meaning: 'The correlation between outputs and targets, from −1 to 1. Close to 1 means the dots hug a straight line.' },
+      { term: 'Novelty detection', meaning: 'Checking whether a new input is unlike the training data, and flagging the answer if it is.' },
+      { term: 'Committee', meaning: 'Several networks trained separately whose outputs are averaged. Where they disagree, none should be trusted.' },
     ],
     steps: [
       {
         kind: 'explore',
-        text: 'Tap to add readings. Change the number of neurons and watch the fit and the predicted time of death.',
+        text: 'Tap to add readings. Change the number of neurons and watch the fit and the predicted time of death. Set Chart to "Regression plot" to see outputs against targets and the R value.',
       },
       {
         kind: 'break',
@@ -188,13 +201,19 @@ const stations: Lab[] = [
       },
       {
         kind: 'fix',
-        text: 'Turn on the validation set and early stopping, or add weight decay. The wiggle goes. The region with no readings stays unreliable until you add readings there.',
+        text: 'Turn on the validation set and early stopping, or add weight decay. The wiggle goes. The region with no readings stays unreliable until you add readings there: slide "Battery at hour" into the red stretch and read the novelty warning, then press "Add evening readings".',
       },
       {
         kind: 'prove',
         text: 'Training error low, validation error high: which problem? Training and validation both low, but the evening prediction is absurd: which problem?',
         answer:
           'The first is overfitting, cured by early stopping, regularisation, fewer neurons or more data. The second is extrapolation: the network was never shown the evening. Only data from that region cures it.',
+      },
+      {
+        kind: 'prove',
+        text: 'On the regression plot the training set gives R = 0.99 and the validation set R = 0.80. What does that tell you? Can a high R on both sets prove the 11 pm forecast is right?',
+        answer:
+          'Training dots lie on the line a = t but validation dots scatter: the network fits the readings it trained on better than new ones, which is overfitting. A high R on both only covers the hours those readings come from. 11 pm is outside them, so R says nothing about it; a novelty check or new readings are needed.',
       },
     ],
   },
@@ -289,11 +308,14 @@ const stations: Lab[] = [
       { term: 'Dead neuron', meaning: 'A neuron that never wins, so it never learns.' },
       { term: 'Quantisation error', meaning: 'Average distance from each input to its closest prototype.' },
       { term: 'Topographic error', meaning: 'Share of inputs whose two closest prototypes are not grid neighbours.' },
+      { term: 'Distance map', meaning: 'The grid shaded by how far each neuron’s weights are from its neighbours’. Dark bands are borders between clusters. Also called a U-matrix.' },
+      { term: 'Hit histogram', meaning: 'How many inputs each neuron wins. It shows where the data is dense and which neurons are dead.' },
+      { term: 'Weight plane', meaning: 'The grid drawn for one input only, showing that input’s weight in every neuron.' },
     ],
     steps: [
       {
         kind: 'explore',
-        text: 'Watch the sheet unfold inside the colour cube. The palette beside it is the map: neighbouring neurons hold neighbouring colours.',
+        text: 'Watch the sheet unfold inside the colour cube. The palette beside it is the map: neighbouring neurons hold neighbouring colours. Then use "Map view" to read it three more ways: "Distance map", "Hits" and "Weight planes".',
       },
       {
         kind: 'break',
@@ -308,6 +330,12 @@ const stations: Lab[] = [
         text: 'Low quantisation error but high topographic error: what does the map look like?',
         answer:
           'The prototypes sit close to the data, so each colour is well represented, but the sheet is twisted: neurons that are neighbours on the grid hold unrelated colours.',
+      },
+      {
+        kind: 'prove',
+        text: 'With the Holi powder sample, the distance map shows light patches separated by darker bands. What are the patches and the bands, and how do the hit histogram and weight planes add to that reading?',
+        answer:
+          'Each light patch is a cluster: neurons holding nearly the same colour, one patch per pile of powder. Dark bands are neurons whose weights are far from their neighbours’, the borders; the border between two similar piles, such as orange and yellow, is fainter than the one between yellow and purple. The hit histogram shows how many pixels each patch holds and marks dead neurons with 0, often on the borders. The weight planes show which input separates which patches: a patch bright on the red plane and dark on the others is the red-pink pile.',
       },
     ],
   },
@@ -327,6 +355,9 @@ const stations: Lab[] = [
       { term: 'Closed loop', meaning: 'Feeding predictions back in as inputs to predict further ahead.' },
       { term: 'Error autocorrelation', meaning: 'How much each error resembles the errors a few steps earlier. Ideally not at all.' },
       { term: 'White error', meaning: 'Errors with no pattern left in them.' },
+      { term: 'Input-error cross-correlation', meaning: 'How much each error resembles the inputs a few steps earlier. Anything outside the limits is input information the network did not use.' },
+      { term: 'NARX network', meaning: 'A prediction network that takes past outputs and past values of an outside input, each through its own tapped delay line.' },
+      { term: 'Concept drift', meaning: 'The pattern itself changes after training, so a model that was right slowly becomes wrong and must be retrained.' },
     ],
     steps: [
       {
@@ -334,18 +365,28 @@ const stations: Lab[] = [
         text: 'Keep a steady rhythm and watch the amber forecast run ahead of you. Then change rhythm and watch it relearn.',
       },
       {
+        kind: 'explore',
+        text: 'Set Mode to "Beat the model". You see two days of hourly load on a campus feeder. Tap where you think the next hour will be, press "Lock in my guess", and compare with the network over at least 5 rounds.',
+      },
+      {
         kind: 'break',
         text: 'Set the delays to 1. One past value says where you are, not which way you are moving, so the forecast is a flat line.',
       },
       {
         kind: 'fix',
-        text: 'Add delays until the error bars sit inside the dashed limits. Compare the one-step trace with the one-second-ahead trace.',
+        text: 'Add delays until the bars of both small charts, error autocorrelation and input-error cross-correlation, sit inside the dashed limits. Compare the one-step trace with the one-second-ahead trace.',
       },
       {
         kind: 'prove',
         text: 'Why is the one-second-ahead trace worse than the one-step trace, although it is the same network?',
         answer:
           'One second ahead is 15 steps in closed loop: each step feeds on the previous prediction instead of a measurement, so small errors accumulate.',
+      },
+      {
+        kind: 'prove',
+        text: 'A load forecaster is trained in series-parallel form and used in parallel form. What is the difference? After training, the error autocorrelation has a tall bar at lag 24. What does that mean and what would you change?',
+        answer:
+          'Series-parallel (open loop): the delay line is fed measured past values, so training is ordinary backpropagation on a static network. Parallel (closed loop): the network’s own predictions are fed back, which is needed to look many steps ahead. A bar outside ±2/√Q at lag 24 means today’s error resembles the error at the same hour yesterday: a daily pattern is unexplained. Lengthen the delay line to cover 24 hours or add hour-of-day as an input, then retrain and check again.',
       },
     ],
   },

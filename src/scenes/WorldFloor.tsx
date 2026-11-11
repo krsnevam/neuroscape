@@ -11,6 +11,7 @@ import Label3D from '../components/Label3D'
 import FpsMeter from '../ui/FpsMeter'
 import QualityToggle from '../ui/QualityToggle'
 import WorldIntroPanel from '../ui/WorldIntroPanel'
+import LecturePlanPanel from '../ui/LecturePlanPanel'
 import DeveloperSignal from '../ui/DeveloperSignal'
 import { worldIntros, worldMissions } from '../data/worldIntros'
 
@@ -150,6 +151,8 @@ export default function WorldFloor({ worldId }: { worldId: string }) {
   const intro = worldIntros[worldId]
   const mission = worldMissions[worldId]
   const [showIntro, setShowIntro] = useState(false)
+  const [showPlan, setShowPlan] = useState(false)
+  const hasPlan = worldId === 'factory'
 
   return (
     <div className="relative h-full w-full">
@@ -206,16 +209,28 @@ export default function WorldFloor({ worldId }: { worldId: string }) {
               <span className="text-xs text-slate-400">{mission.blurb}</span>
             </div>
           )}
-          {intro && (
-            <button
-              type="button"
-              onClick={() => setShowIntro(true)}
-              className="pointer-events-auto mt-2 rounded-md border px-3 py-1.5 text-xs font-medium text-white backdrop-blur hover:bg-white/10"
-              style={{ borderColor: world.color, background: `${world.color}22` }}
-            >
-              {intro.button} →
-            </button>
-          )}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {intro && (
+              <button
+                type="button"
+                onClick={() => setShowIntro(true)}
+                className="pointer-events-auto rounded-md border px-3 py-1.5 text-xs font-medium text-white backdrop-blur hover:bg-white/10"
+                style={{ borderColor: world.color, background: `${world.color}22` }}
+              >
+                {intro.button} →
+              </button>
+            )}
+            {hasPlan && (
+              <button
+                type="button"
+                onClick={() => setShowPlan(true)}
+                className="pointer-events-auto rounded-md border px-3 py-1.5 text-xs font-medium text-white backdrop-blur hover:bg-white/10"
+                style={{ borderColor: world.color, background: `${world.color}22` }}
+              >
+                Lecture plan and slides →
+              </button>
+            )}
+          </div>
         </div>
         <div className="pointer-events-auto flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
           <FpsMeter />
@@ -226,6 +241,7 @@ export default function WorldFloor({ worldId }: { worldId: string }) {
       {intro && showIntro && (
         <WorldIntroPanel intro={intro} worldId={worldId} labs={labs} color={world.color} onClose={() => setShowIntro(false)} />
       )}
+      {hasPlan && showPlan && <LecturePlanPanel worldId={worldId} labs={labs} color={world.color} onClose={() => setShowPlan(false)} />}
 
       <nav className="absolute inset-x-0 bottom-0 flex gap-2 overflow-x-auto p-3" aria-label="Stations">
         {labs.map((lab, i) => (

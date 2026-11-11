@@ -37,6 +37,19 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         point: 'Noise sets a floor under the error',
         detail: 'Two trips at the same hour take different times. No network can predict that scatter, so an error near 2 to 3 minutes here is as good as it gets. An error far below the noise means memorising.',
       },
+      {
+        point: '70 / 15 / 15 is a starting point, not a rule',
+        detail: 'About 70% of the records train the weights, 15% decide when to stop (validation) and 15% give the final honest estimate (test). With very little data the split costs too much and regularisation is used instead; with a great deal, 1% for testing may be plenty.',
+      },
+      {
+        point: 'You learn afterwards whether the data was enough',
+        detail: 'No formula gives the amount of data in advance. It depends on how many bends the true curve has and how noisy the readings are. The check comes after training: low training error with high test error says the data was too little for the network.',
+        tryIt: 'Set the sample to its smallest size, train, and compare the training and test errors.',
+      },
+      {
+        point: 'Missing values need a decision, not a default',
+        detail: 'A trip with no recorded time, or no hour, is common in real logs. With plenty of data, drop the record. If an input is missing, fill it with the mean and add a 0/1 input that says "this was missing". If the target is missing, keep the record out of the error. First check that the gaps are not all from one part of the day.',
+      },
     ],
     tutor: {
       minutes: 12,
@@ -98,6 +111,30 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         point: 'Targets are scaled too',
         detail: 'The linear output could produce 0 to 100 directly, but scaling targets to about −1…1 keeps the error surface well shaped and the gradients of all layers comparable.',
       },
+      {
+        point: 'Two standard ways to normalise',
+        detail: 'Min-max: pⁿ = 2(p − pmin)/(pmax − pmin) − 1 maps each input to [−1, 1]. Mean and standard deviation: pⁿ = (p − mean)/std gives mean 0 and spread 1, and is safer when a few extreme readings would stretch the range. Either way the constants come from the training set and are stored with the network.',
+      },
+      {
+        point: 'A good transform does part of the network\'s work',
+        detail: 'For a thermistor, 1/T is almost a straight line in ln R. Feeding ln R instead of R turns a sharply curved problem into a nearly straight one that very few neurons can fit. Taking the log of a price, or coding the hour as sine and cosine, are the same idea: use what you know before asking the network to discover it.',
+      },
+      {
+        point: 'PCA removes inputs that repeat each other',
+        detail: 'When a product has many sensors that rise and fall together, principal component analysis rotates them into uncorrelated components and keeps those that carry most of the variance. Fewer inputs means fewer weights for the same calibration data. It is linear and ignores the target, so confirm the test error has not got worse.',
+      },
+      {
+        point: 'Name the task before choosing the network',
+        detail: 'Calibration is fitting: a number out, so a tansig hidden layer with a linear output, trained on mean square error. A yes/no decision is pattern recognition (sigmoid or softmax output, cross-entropy). Grouping unlabelled readings is clustering (a self-organising map). Forecasting the next reading is prediction (a time-delay or NARX network).',
+      },
+      {
+        point: 'An RBF network could fit this curve too',
+        detail: 'Radial basis neurons respond only near their own centre, so the fit is built from local bumps. It trains quickly and returns to a constant away from the data instead of saturating. The cost is the number of neurons, which grows fast as inputs are added. For one or two inputs, as here, either network is a sound choice.',
+      },
+      {
+        point: 'Sensitivity analysis shows which inputs earn their place',
+        detail: 'After training, measure how much the error changes when each input changes. An input with almost no effect can be removed and the network retrained. If the test error does not rise, the smaller network is the better one.',
+      },
     ],
     tutor: {
       minutes: 12,
@@ -133,7 +170,7 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
       architecture: '1-1. A single neuron with one input (hours of sleep): one weight w and one bias b. Sigmoid (logsig) or linear (purelin), your choice.',
       forward: 'n = wp + b, then a = logsig(n) = 1/(1 + e⁻ⁿ), read as "how likely to stay awake". With purelin, a = n.',
       learning: 'F(w, b) = mean (t − a)². Steepest descent: x ← x − αg. Momentum: Δx ← γΔx − (1 − γ)αg. Levenberg-Marquardt: Δx = −[JᵀJ + μI]⁻¹Jᵀv.',
-      choices: 'Two parameters is the most that can be drawn as a surface. Real networks have thousands, but every one of them is moving on a surface like this, in more dimensions.',
+      choices: 'Two parameters is the most that can be drawn as a surface. Real networks have thousands, but every one of them is moving on a surface like this, in more dimensions. The "Starting weights" view therefore uses a real 1-6-1 network (tansig hidden layer, linear output, 19 parameters) trained by steepest descent with momentum on quiz marks against hours of sleep.',
     },
     nuances: [
       {
@@ -165,6 +202,30 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         detail: 'On a surface with plateaus, some starting weights never reach the valley in reasonable time. This is why training is run from several random starts.',
         tryIt: 'Press "Random start" several times with the sigmoid neuron.',
       },
+      {
+        point: 'All-zero weights switch the hidden layer off for good',
+        detail: 'With every weight at 0, each hidden neuron outputs tansig(0) = 0, so the gradient for the output weights (s² a¹) is 0. The output weights are 0, so the sensitivity passed back, s¹ = Ḟ¹(W²)ᵀs², is also 0. Only the output bias b² learns, and it settles on the mean target. Zero is a flat spot of the surface that training cannot leave.',
+        tryIt: 'View "Starting weights", choose "All zero". Read the weight table (all rows stay 0.000) and "Why it stopped".',
+      },
+      {
+        point: 'Equal weights make six neurons behave as one',
+        detail: 'Neurons that start identical see the same input and receive the same sensitivity, so every update is identical too. They stay copies for ever, and a 1-6-1 network has the power of a 1-1-1. Random starting values exist to break this symmetry, not to be clever guesses.',
+        tryIt: 'Choose "All equal" and compare "Distinct neurons" (1 of 6) with "Small random" (6 of 6).',
+      },
+      {
+        point: 'Small, but not too small, and matched to the input scale',
+        detail: 'Large starting weights push sigmoids into saturation, where the slope and so the gradient is nearly zero. Very small ones leave every neuron on the same straight middle section. Nguyen-Widrow sets each hidden weight to size 0.7·S^(1/R) and spreads the biases across ±that size, so with inputs normalised to [−1, 1] the S sigmoids each cover a different slice of the input range from the first iteration.',
+        tryIt: 'Run "Small random", then "Nguyen-Widrow". Compare the middle strip at the start of each run and the iteration count at the end.',
+      },
+      {
+        point: 'Four ways to stop, and each says something different',
+        detail: 'Goal met: the error is as low as you asked for. Minimum gradient: the ground is flat, which may be a minimum or a plateau. Maximum iterations: a time limit, no claim about quality. Validation stopped improving: more training would only memorise, so the earlier weights are kept. Always record which one ended a run.',
+        tryIt: 'In "When to stop", set "Error goal" to 8 marks; then set it to off and "Maximum iterations" to 500; then switch "Early stopping" off. Read "Why it stopped" each time.',
+      },
+      {
+        point: 'Match the algorithm to the size and the task',
+        detail: 'Levenberg-Marquardt is the fastest choice for function fitting with up to a few hundred weights, because it stores an n × n matrix and assumes squared error. Scaled conjugate gradient needs only gradients and no line search, so it suits large networks and pattern recognition with a cross-entropy performance function. Steepest descent with momentum is the fallback for very large networks and for training one sample at a time.',
+      },
     ],
     tutor: {
       minutes: 15,
@@ -175,22 +236,24 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
           ask: 'Which ball do you expect to win, and why?',
         },
         break: {
-          say: 'Linear neuron, raw hours, α = 0.1. The panel shows the stable limit. We are above it.',
-          ask: 'Each step is "learning rate times slope". Why does a big step make the error grow?',
+          say: 'Linear neuron, raw hours, α = 0.1. The panel shows the stable limit. We are above it. Then switch View to "Starting weights" and press the button again: every weight starts at zero. The fit is a flat line at the class average and the table of weights never changes.',
+          ask: 'Each step is "learning rate times slope". Why does a big step make the error grow? And with all weights zero: six neurons, yet a flat line. Which single parameter moved, and why only that one?',
         },
         fix: {
-          say: 'Three cures: a smaller α, momentum, and scaling the input. Notice scaling changed the surface itself.',
-          ask: 'Which cure changed the problem and which only changed how we walk on it?',
+          say: 'Three cures: a smaller α, momentum, and scaling the input. Notice scaling changed the surface itself. In "Starting weights" the cure is a small random start: the six curves in the middle strip separate and the fit follows the rise and the dip. Try "All equal" on the way to show that different from zero is not enough; they must differ from each other.',
+          ask: 'Which cure changed the problem and which only changed how we walk on it? For the starting weights: why random, and why small?',
         },
         prove: {
-          say: 'Read λ_max from the panel and have them compute the limit.',
-          ask: 'Why does Levenberg-Marquardt finish the linear neuron in one or two steps?',
+          say: 'Read λ_max from the panel and have them compute the limit. Then list the four stopping criteria on the board and have them match each to "Why it stopped" in three runs.',
+          ask: 'Why does Levenberg-Marquardt finish the linear neuron in one or two steps? A run ends on "maximum iterations": is the network trained?',
         },
       },
       misconceptions: [
         { wrong: 'A bigger learning rate just learns faster.', right: 'Past a limit it does not learn at all; the error grows.' },
         { wrong: 'A flat loss curve means training is finished.', right: 'It can be a plateau. Sigmoid networks have long flat stretches followed by drops.' },
         { wrong: 'There is one best algorithm.', right: 'It depends on size: second-order for small networks, gradient methods for large ones.' },
+        { wrong: 'Starting from zero is the neutral, fair choice.', right: 'Zero is a flat spot: hidden neurons get no gradient. Equal values are no better, because the neurons stay copies.' },
+        { wrong: 'Training stopped, so it converged.', right: 'Ask which criterion stopped it. A time limit or a plateau is not convergence.' },
       ],
       close: 'We now have weights. The next question is whether they are any good, and that needs more than one number.',
     },
@@ -229,6 +292,18 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
       {
         point: 'How an input is coded is part of the model',
         detail: 'Feeding the hour as a plain number would tell the network that midnight (0) and 11 pm (23) are far apart. A circular coding fixes that before training starts.',
+      },
+      {
+        point: 'Cross-entropy punishes confident mistakes',
+        detail: 'A score of 0.02 for a payment that is fraud costs −ln 0.02 ≈ 3.9 under cross-entropy and only 0.96 under squared error. Squared error can never charge more than 1, so the network learns slowly from its worst misses. This is why classifiers are trained on cross-entropy with a sigmoid or softmax output.',
+      },
+      {
+        point: 'Large classifiers are trained with scaled conjugate gradient',
+        detail: 'Levenberg-Marquardt is built for sum-of-squares errors and small networks. A fraud model in a bank has hundreds of inputs and thousands of weights, trained on cross-entropy, so scaled conjugate gradient (or a stochastic gradient method) is used. The small network here uses momentum for the same reason.',
+      },
+      {
+        point: 'A committee steadies the score',
+        detail: 'Train several networks from different random starts and average their scores. Each one draws the edge of the fraud region slightly differently; the average is smoother and usually ranks payments better than any single member. Where the members disagree strongly, the payment is unlike the training data and deserves a person\'s attention.',
       },
     ],
     tutor: {
@@ -296,22 +371,42 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         detail: 'Far from the readings every tansig neuron saturates, so the output tends to a constant. Here that can look like a battery that stops draining.',
         tryIt: 'Use "Morning only" readings and look at 12 to 14 hours.',
       },
+      {
+        point: 'The regression plot shows what one error number hides',
+        detail: 'Plot the network output a against the target t for every reading and fit a line a = mt + c. A good network gives m near 1, c near 0 and R near 1. Dots that bend away at one end mean the network is poor for low or high values only, which an average error would never show. Draw it separately for training and validation: a high R on training with a lower R on validation is overfitting seen from another angle.',
+        tryIt: 'Press Break, wait for training to finish, then set Chart to "Regression plot" and compare "R, training" with "R, validation".',
+      },
+      {
+        point: 'R says how well, not where',
+        detail: 'R is computed only from the readings you have. A network with R = 0.99 on morning readings has told you nothing about the evening. Read R together with the range the data covers.',
+        tryIt: 'With "Morning only" readings and 2 neurons, note the high R, then look at what the curve says for 12 hours.',
+      },
+      {
+        point: 'Novelty detection: teach the system to say "I have not seen this"',
+        detail: 'A network always returns a number, with the same confidence everywhere. A novelty detector is a separate check on the input: is it close to anything in the training set? Here the rule is "a training reading within 1 hour". With many inputs, teams use the distance to the nearest training points or a second network (an RBF layer, a SOM or an autoassociative network) trained on the inputs alone.',
+        tryIt: 'Slide "Battery at hour" from 3 to 12 and watch the message change to "Outside training data: do not trust". Then press "Add evening readings".',
+      },
+      {
+        point: 'A committee of networks beats its average member',
+        detail: 'Train several networks from different starting weights or different splits of the data and average their outputs. Their individual errors partly cancel, so the committee is usually better than a typical member, and the spread between members is a free warning sign: where they disagree widely, the data did not pin the answer down.',
+        tryIt: 'Press "Restart training" several times with 20 neurons and watch the right-hand side of the curve change each time. That spread is what a committee would measure.',
+      },
     ],
     tutor: {
       minutes: 15,
       opener: 'Ask: "Two students prepare for the exam. One memorises last year’s paper, one learns the method. Who scores higher on last year’s paper? On this year’s?"',
       steps: {
         explore: {
-          say: 'Blue readings train the network; amber ones only test it. The yellow curve is the prediction, and the red line at 0% is a dead phone.',
-          ask: 'The shaded area has no readings. How much should we trust the curve there?',
+          say: 'Blue readings train the network; amber ones only test it. The yellow curve is the prediction, and the red line at 0% is a dead phone. Open "Regression plot" once: every dot near the dashed line means output equals target, and R sums that up in one number.',
+          ask: 'The red stretch has no readings and the curve turns dashed there. How much should we trust it? Does a high R help us there?',
         },
         break: {
           say: 'Twenty neurons, no safeguards. Watch the small chart: blue keeps falling, amber turns up. That gap is the signature of memorising.',
           ask: 'Training error is nearly zero. Is this the best model we have had or the worst?',
         },
         fix: {
-          say: 'Early stopping keeps the weights from the green line. Notice what it fixes and what it does not.',
-          ask: 'The wiggle is gone. Is the evening forecast now reliable? What would make it reliable?',
+          say: 'Early stopping keeps the weights from the green line. Notice what it fixes and what it does not. Slide "Battery at hour" into the evening: the network still answers, and the novelty check says do not trust it. Then add evening readings and ask again.',
+          ask: 'The wiggle is gone. Is the evening forecast now reliable? What would make it reliable? Who should raise the warning: the network or something beside it?',
         },
         prove: {
           say: 'Put the two error patterns on the board and have them name each.',
@@ -322,6 +417,8 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         { wrong: 'Zero training error is the goal.', right: 'The goal is low error on new data. Zero training error on noisy data means memorising.' },
         { wrong: 'Early stopping fixes bad predictions everywhere.', right: 'Only inside the range of the data.' },
         { wrong: 'Big networks always overfit.', right: 'Not if they are regularised or have enough data.' },
+        { wrong: 'R = 0.99 means the model is right.', right: 'It means outputs track targets on the data you tested. It is silent about inputs outside that data.' },
+        { wrong: 'The network knows when it is unsure.', right: 'It gives a number with equal confidence everywhere. A separate novelty check or a committee has to raise the flag.' },
       ],
       close: 'Generalisation is the only goal; training error is the means. The remaining stations apply the whole pipeline to the kinds of problem industry brings.',
     },
@@ -418,6 +515,23 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         detail: 'Trained on one person’s strokes, it does worse on another’s. Training data must come from the people who will use it.',
         tryIt: 'Have a second student draw without teaching it first, and count how many it gets right.',
       },
+      {
+        point: 'One output per class, never one number for the class',
+        detail: 'The targets are one-of-N: for three shapes, [1 0 0], [0 1 0] and [0 0 1]. Coding the classes as 1, 2 and 3 on a single neuron would tell the network that shape 2 lies between shapes 1 and 3, and that confusing 1 with 3 is twice as bad as confusing 1 with 2. Neither is true.',
+      },
+      {
+        point: 'A different hand is a different data set',
+        detail: 'A network taught by one person scores well on that person and worse on everyone else: slant, size and stroke order differ. This is domain shift. The cure is examples from the people who will use it, and the same preprocessing at use as in training.',
+        tryIt: 'Teach the shapes yourself, then hand the device to a neighbour and watch the confusion matrix.',
+      },
+      {
+        point: 'With little data, features beat raw pixels',
+        detail: 'A small grid of features gives tens of inputs; raw pixels would give thousands, each needing its own weights and far more examples. Classical pattern recognition puts the knowledge into the features and lets a small network draw the boundary. Deep networks learn the features too, at the price of very large data sets.',
+      },
+      {
+        point: 'Read the confusion matrix by rows',
+        detail: 'Overall accuracy hides which shapes are confused. Each row shows where one true shape went. Two rows that leak into each other point to two shapes that look alike in feature space: fix it with a better feature or more examples of exactly those two.',
+      },
     ],
     tutor: {
       minutes: 12,
@@ -483,14 +597,33 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         detail: 'Colours that fill more of the picture get more neurons. The map is a picture of the data, not of colour space.',
         tryIt: 'Load a photo that is mostly one colour and look at the palette.',
       },
+      {
+        point: 'The distance map shows clusters without knowing the inputs',
+        detail: 'With three inputs we can paint each neuron in its own colour. With thirty inputs we cannot. The distance map (U-matrix) works for any number: shade each neuron by the mean distance ‖wᵢ − wⱼ‖ to its grid neighbours. Light patches are groups of similar neurons, the clusters; dark bands are the borders between them.',
+        tryIt: 'Set "Map view" to "Distance map" with the Holi sample, find the darkest band, then switch to "Colours" to see which two groups it separates.',
+      },
+      {
+        point: 'The hit histogram tells you where the data lives',
+        detail: 'Count the inputs each neuron wins. A patch with many hits is a large cluster; neurons with 0 hits are dead or sit on a border where no data falls. A map where a few neurons take nearly all the hits is too coarse there or badly initialised.',
+        tryIt: 'Set "Map view" to "Hits". Then press Break and look at the histogram again.',
+      },
+      {
+        point: 'Weight planes show which input does the separating',
+        detail: 'Draw the map once per input, shaded by that input’s weight. Two planes that look alike mean the two inputs are strongly related and one may be dropped. A plane that is nearly uniform means that input does not help to tell the clusters apart.',
+        tryIt: 'Set "Map view" to "Weight planes" and find the patch that is bright on red and dark on green and blue.',
+      },
+      {
+        point: 'Read all three together before naming a cluster',
+        detail: 'Analysts use the distance map to find the borders, the hit histogram to size each group, and the weight planes to describe it in words ("high red, low blue"). Only then does a person give the group a name.',
+      },
     ],
     tutor: {
       minutes: 12,
       opener: 'Ask: "I give you 700 colours and no names. Could you sort them into groups? Did anyone tell you the right answer?"',
       steps: {
         explore: {
-          say: 'Each small dot is a pixel placed at its colour. The joined balls are 64 neurons. Watch the sheet unfold to cover the dots.',
-          ask: 'Nobody labelled anything. What is the network using in place of a teacher?',
+          say: 'Each small dot is a pixel placed at its colour. The joined balls are 64 neurons. Watch the sheet unfold to cover the dots. Then walk through "Map view": colours, distance map, hits, weight planes. Say that with thirty inputs only the last three views would exist.',
+          ask: 'Nobody labelled anything. What is the network using in place of a teacher? On the distance map, where are the clusters: the light cells or the dark ones?',
         },
         break: {
           say: 'All neurons start in the black corner, and I switch the neighbourhood off. Only winners learn.',
@@ -501,14 +634,16 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
           ask: 'What other fix can you think of for a neuron that never wins?',
         },
         prove: {
-          say: 'Sketch a twisted sheet on the board.',
-          ask: 'Which error is low and which is high for that sheet?',
+          say: 'Sketch a twisted sheet on the board. Then show the distance map and hit histogram side by side.',
+          ask: 'Which error is low and which is high for that sheet? From the distance map and hits alone, how many kinds of powder are there and which is the biggest pile?',
         },
       },
       misconceptions: [
         { wrong: 'Clustering finds the correct groups.', right: 'There is no correct answer; groups depend on inputs and scaling, and a person must interpret them.' },
         { wrong: 'A SOM is trained with backpropagation.', right: 'There is no error signal; it learns by competition.' },
         { wrong: 'More neurons give more accurate clusters.', right: 'They give a finer map, and more dead neurons if badly initialised.' },
+        { wrong: 'Each neuron is one cluster.', right: 'A cluster is a patch of many neurons. The distance map shows where one patch ends and the next begins.' },
+        { wrong: 'A neuron with zero hits is always a fault.', right: 'On the border between two well-separated clusters it is expected: no data falls there.' },
       ],
       close: 'That is learning without a teacher. The last station adds time: predicting what comes next.',
     },
@@ -518,7 +653,7 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
       architecture: 'D-8-1 behind a tapped delay line. D inputs (the last D samples of the signal), 8 hidden tansig neurons, 1 linear output (the next sample). 8D + 17 parameters.',
       forward: 'p = [y(t−1), y(t−2), …, y(t−D)]ᵀ, a¹ = tansig(W¹p + b¹), ŷ(t) = W²a¹ + b². The network itself is static; the delay line gives it memory.',
       learning: 'Mean square error between ŷ(t) and the measured y(t), using measured past values as inputs (series-parallel form), retrained with Levenberg-Marquardt on 60 recent windows several times a second.',
-      choices: 'With one linear neuron in place of the hidden layer this is the ADALINE adaptive filter. Feeding predictions back into the delay line turns it into a NARX-style closed loop for looking further ahead.',
+      choices: 'With one linear neuron in place of the hidden layer this is the ADALINE adaptive filter. Feeding predictions back into the delay line turns it into a NARX-style closed loop for looking further ahead. "Beat the model" uses a 24-5-1 network of the same kind (131 parameters) trained once on two weeks of hourly campus load and tested on the following week.',
     },
     nuances: [
       {
@@ -549,22 +684,46 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         point: 'Never shuffle a time series before splitting',
         detail: 'A random split puts samples from the future into the training set. The test must come after the training data in time.',
       },
+      {
+        point: 'NARX: add the outside causes',
+        detail: 'This station predicts y(t) from its own past only (a nonlinear autoregressive model). A NARX network adds a second tapped delay line for an outside input u(t), such as temperature for electricity load: y(t) = f(y(t−1), …, y(t−D_y), u(t−1), …, u(t−D_u)). It is the standard network for the prediction case study.',
+      },
+      {
+        point: 'Train series-parallel, forecast parallel',
+        detail: 'During training the true past outputs are known, so they are fed to the delay line (series-parallel, open loop). The network is then static and ordinary backpropagation or Levenberg-Marquardt works. To look many steps ahead the loop is closed and the network’s own outputs are fed back (parallel form). Always test in the form you will use.',
+        tryIt: 'Compare "One step ahead" (open loop) with "One second ahead" (closed loop).',
+      },
+      {
+        point: 'Two correlation tests, two different questions',
+        detail: 'Error autocorrelation asks whether the errors resemble their own past. Input-error cross-correlation asks whether the errors resemble the inputs at earlier times. Both should stay within ±2/√Q at every lag except autocorrelation at lag 0. A bar outside in either means more delays, more neurons or a missing input.',
+        tryIt: 'Set the delays to 1 and read both small charts; then set 8 and read them again.',
+      },
+      {
+        point: 'Compare with a simple baseline and with people',
+        detail: 'A forecast is only good relative to something. "Same as the last hour" and "same as this hour yesterday" cost nothing; a network must beat both. People are good at steady shapes and calendar knowledge, and poor at weighing 24 numbers consistently.',
+        tryIt: 'Set Mode to "Beat the model" and play 10 rounds. Notice which hours you win: a steady climb, or a jump at the start of a working day?',
+      },
+      {
+        point: 'Concept drift: the world moves after training',
+        detail: 'A model trained on last term’s load is wrong after a new hostel opens or exams begin. The inputs look ordinary; the relation between input and output has changed. Teams track live error daily, keep a baseline alongside, and retrain on recent data when the error drifts up.',
+        tryIt: 'In "Live forecast" with "My finger", hold a rhythm until the errors are small, then change it and watch the one-second error jump and recover.',
+      },
     ],
     tutor: {
       minutes: 12,
       opener: 'Clap a steady rhythm and stop. Ask the class to clap the next beat. Then clap an irregular one and ask again.',
       steps: {
         explore: {
-          say: 'White is what happened. The amber dots to the right are the forecast, each built on the previous one. The coloured line compares earlier forecasts with what then happened.',
-          ask: 'How far ahead do you trust it? What happens to the forecast when the rhythm changes?',
+          say: 'White is what happened. The amber dots to the right are the forecast, each built on the previous one. The coloured line compares earlier forecasts with what then happened. Then switch Mode to "Beat the model": the whole class calls out a number for the next hour of campus load, you enter the average, and the network answers. Play at least five rounds and keep the score on screen.',
+          ask: 'How far ahead do you trust it? What happens to the forecast when the rhythm changes? In the game: what did you use to guess that the network cannot see, and what does it use that you cannot hold in your head?',
         },
         break: {
           say: 'One delay only. It sees a single past value.',
           ask: 'I tell you a swing is at its lowest point. Which way is it moving? What else would you need?',
         },
         fix: {
-          say: 'More delays. Watch the bars: inside the dashed limits means the leftover errors have no pattern.',
-          ask: 'Why not use a hundred delays to be safe?',
+          say: 'More delays. Watch both sets of bars: error autocorrelation on the left, input-error cross-correlation on the right. Inside the dashed limits means the leftover errors have no pattern and owe nothing to the inputs.',
+          ask: 'Why not use a hundred delays to be safe? If only the cross-correlation bars were red, what would you add?',
         },
         prove: {
           say: 'Point at the two error numbers in the panel.',
@@ -575,6 +734,8 @@ export const factoryDeep: Record<string, { network: LabNetwork; nuances: LabNuan
         { wrong: 'A good one-step predictor is a good forecaster.', right: 'Closed-loop errors accumulate; test at the horizon you need.' },
         { wrong: 'Prediction needs a recurrent network.', right: 'A static network with a tapped delay line already has memory of the recent past.' },
         { wrong: 'More delays are always better.', right: 'They add parameters, need more data and slow the response to change.' },
+        { wrong: 'A small error is enough to accept a forecaster.', right: 'Also check that the errors are white and uncorrelated with the inputs, and that it beats a simple baseline.' },
+        { wrong: 'Once trained, a forecaster stays good.', right: 'The pattern drifts. Error must be watched after launch and the model retrained.' },
       ],
       close: 'Four problem types, four networks, four ways to check them. Now play the mission and take one model through every stage.',
     },

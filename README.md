@@ -11,6 +11,7 @@ npm test           # engine maths checked against Hagan worked examples
 npm run typecheck
 npm run build      # production build + PWA service worker (works offline)
 npm run preview    # serve the build
+npm run slides     # rebuild the Unit V lecture decks into public/slides
 ```
 
 ## Structure
@@ -48,14 +49,20 @@ Open `/#/world/factory`. Each station is built on an everyday example and follow
 | Lecture | Station | Everyday example | Unit V topic |
 |---------|---------|------------------|--------------|
 | L35 | Silk Board Sampler | Minutes to cross Silk Board junction by hour of day | Selection of data, sampling, three-way split |
-| L36 | Thermistor Bench | Calibrating an Arduino thermistor reading (0 to 1023) | Preprocessing, choice of architecture |
+| L35–36 | Thermistor Bench | Calibrating an Arduino thermistor reading (0 to 1023) | Preprocessing, choice of architecture |
 | L37 | Error Valley Race | Will you stay awake in the 8 am class? Three algorithms race on the error surface | Initialisation, training algorithm, stopping |
-| L38 | UPI Fraud Alarm | Flagging fraudulent payments when only 6% are fraud | Post-training analysis, confusion matrix, ROC |
-| L39 | Battery Oracle | Predicting when your phone battery dies from a few readings | Overfitting and extrapolation |
+| L38–39 | UPI Fraud Alarm | Flagging fraudulent payments when only 6% are fraud | Post-training analysis, confusion matrix, ROC |
+| L39–40 | Battery Oracle | Predicting when your phone battery dies from a few readings | Overfitting and extrapolation |
 | L40 | Chase Predictor | Win probability in the last overs of a T20 chase | Function approximation, probability estimation |
 | L41 | Doodle Reader | Teaching a network your own circle, cross and tick | Pattern recognition case study |
 | L41 | Colour Map | A self-organising map of the colours in a camera picture | Clustering case study |
 | L42 | Finish My Move | Forecasting your finger or phone-tilt rhythm | Prediction case study |
+
+### Lecture plan and slides
+
+The floor's "Lecture plan and slides" button lists the eight Unit V hours (L35 to L42) from `src/data/unit5Plan.ts`: what each teaches, its live classroom element, the stations to open and a PowerPoint deck to download. Each station also links the decks of the lectures it is used in.
+
+The decks live in `public/slides` and are generated from `scripts/slides/decks/L35.cjs` to `L42.cjs` with the slide kit in `scripts/slides/lib.cjs`. Edit a deck file and run `npm run slides` (or `npm run slides -- L37` for one deck). Every slide carries speaker notes.
 
 The camera, photo and phone-tilt inputs need HTTPS (or localhost) and the user's permission; every station also works without them.
 

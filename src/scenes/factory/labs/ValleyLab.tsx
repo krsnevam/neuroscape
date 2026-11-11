@@ -8,6 +8,7 @@ import { useTicker } from '../../../ui/lab/Canvas2D'
 import { Btn, Group, Seg, Slider, Stat, Stats, Toggle } from '../../../ui/lab/controls'
 import { createTrainer, gauss, lmStep, rng, type Network, type Sample, type TransferName } from '../../../engine'
 import { useAppStore } from '../../../store/useAppStore'
+import { useStartWeights } from './valleyStart'
 
 /** 26 students: hours of sleep, and whether they stayed awake in the 8 am class. */
 const students = (() => {
@@ -215,6 +216,8 @@ export default function ValleyLab() {
   const [speed, setSpeed] = useState(14)
   const [startFrac, setStartFrac] = useState({ x: 0.16, z: 0.2 })
   const [run, setRun] = useState(1)
+  const [view, setView] = useState<'surface' | 'start'>('surface')
+  const startLab = useStartWeights()
   useTicker(200)
 
   const alpha = 10 ** logAlpha
@@ -246,6 +249,34 @@ export default function ValleyLab() {
 
   const limit = 2 / land.lambdaMax
   const minPos = land.toWorld(land.min.w, land.min.b)
+  const viewSeg = (
+    <Group title="View">
+      <Seg
+        value={view}
+        onChange={setView}
+        options={[
+          { value: 'surface', label: 'Error surface race' },
+          { value: 'start', label: 'Starting weights' },
+        ]}
+      />
+    </Group>
+  )
+  if (view === 'start')
+    return (
+      <LabShell
+        labId="valley"
+        happening={startLab.happening}
+        actions={startLab.actions}
+        panel={
+          <>
+            {viewSeg}
+            {startLab.panel}
+          </>
+        }
+      >
+        {startLab.scene}
+      </LabShell>
+    )
   return (
     <LabShell
       labId="valley"
@@ -290,6 +321,7 @@ export default function ValleyLab() {
       }}
       panel={
         <>
+          {viewSeg}
           <Group title="The race">
             <div className="flex flex-wrap gap-2">
               <Btn tone="go" onClick={() => setRun((r) => r + 1)}>

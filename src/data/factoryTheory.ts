@@ -55,11 +55,11 @@ export const factoryTheory: Record<string, { theory: LabTheory; complexity: LabC
     theory: {
       idea: 'Training is a search for the lowest point of the error surface. The algorithm decides how each step is chosen, the learning rate decides how long it is, and the starting weights decide which valley you end up in.',
       how: [
-        'Start from small random weights.',
+        'Start from small random weights, never all zero or all equal: hidden neurons that start the same stay the same. Nguyen-Widrow spreads them across the input range.',
         'Steepest descent: measure the slope (gradient) and step downhill by α times the slope.',
         'Momentum: add a share γ of the previous step, which damps zig-zags and keeps speed on flat ground.',
         'Levenberg-Marquardt: estimate the curvature too and jump towards where the bottom should be; fall back to small safe steps when the jump fails.',
-        'Stop when the slope is nearly zero, the validation error starts rising, or a step limit is reached.',
+        'Stop on the first of four criteria: the error goal is met, the gradient is nearly zero, the validation error has stopped improving, or the iteration limit is reached.',
       ],
       usedFor: [
         { where: 'Every trained network', example: 'Speech recognisers, translators and image models are all trained by variants of gradient descent with momentum.' },
@@ -108,7 +108,8 @@ export const factoryTheory: Record<string, { theory: LabTheory; complexity: LabC
         'Hold back a validation set and watch its error during training.',
         'Read the pattern: both errors high is underfitting; training low and validation high is overfitting.',
         'Cure overfitting by stopping when the validation error is lowest, by penalising large weights, by using fewer neurons, or with more data.',
-        'Check where the new inputs lie. Outside the range of the training data, no setting helps: collect data there.',
+        'Draw the regression plot, outputs against targets, for training and validation readings. R near 1 on both means the outputs track the targets on the data you have.',
+        'Check where the new inputs lie (novelty detection). Outside the range of the training data, no setting helps: flag the answer and collect data there.',
       ],
       usedFor: [
         { where: 'Battery and range estimates', example: 'Phones and electric vehicles predict remaining time from usage so far, and are least reliable in conditions they have not seen, such as extreme cold.' },
@@ -182,7 +183,7 @@ export const factoryTheory: Record<string, { theory: LabTheory; complexity: LabC
         'Present one input and find the neuron whose prototype is closest: the winner.',
         'Move the winner and its neighbours a fraction α of the way towards the input (the Kohonen rule).',
         'Repeat, shrinking the neighbourhood and α so the map first orders itself, then fine-tunes.',
-        'Read the result: which inputs each neuron wins, and how far apart neighbouring prototypes are.',
+        'Read the result with three tools: the hit histogram (which inputs each neuron wins), the distance map (how far apart neighbouring prototypes are) and the weight planes (one picture of the map per input).',
       ],
       usedFor: [
         { where: 'Image compression', example: 'Reducing a photo to a palette of 64 or 256 representative colours is exactly this clustering.' },
@@ -207,7 +208,7 @@ export const factoryTheory: Record<string, { theory: LabTheory; complexity: LabC
         'Form training pairs: the last D values as input, the next value as target.',
         'Train with measured values as inputs (series-parallel form), which is ordinary backpropagation.',
         'To look further ahead, feed each prediction back in as if it were a measurement (closed loop).',
-        'Check that the one-step errors show no pattern: their autocorrelation should stay inside the limits.',
+        'Check that the one-step errors show no pattern: their autocorrelation, and their cross-correlation with the inputs, should stay inside the limits ±2/√Q.',
       ],
       usedFor: [
         { where: 'Electricity grids', example: 'Load for the next hours is forecast from the last days of demand so that generation can be scheduled.' },

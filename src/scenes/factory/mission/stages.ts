@@ -29,7 +29,7 @@ export const stages: Stage[] = [
   {
     id: 'data',
     name: 'Collect',
-    syllabus: 'Pre-training steps · Selection of data',
+    syllabus: 'L35 · Pre-training steps · Selection of data',
     question: 'Which past orders will the model learn from?',
     why: 'The model can only learn situations that are in its data. Every square on the map with no dots is a situation it will have to guess. Each record also costs money to check, so more is not free.',
     picture: 'Across: hour of the day. Up: distance. Grey dots are orders the app will get after launch. Coloured dots are the records you chose: blue to train, amber to validate, rose to test. Red squares have no training data.',
@@ -44,7 +44,7 @@ export const stages: Stage[] = [
   {
     id: 'prepare',
     name: 'Prepare',
-    syllabus: 'Data preprocessing',
+    syllabus: 'L35 · Data preprocessing',
     question: 'Is the data clean and scaled before the network sees it?',
     why: 'Sigmoid neurons respond only to inputs of about −1 to 1. Distance in metres is in the thousands, which pins them flat. Broken records, where a rider forgot to tap "Delivered", pull the whole model towards nonsense.',
     picture: 'Left: each training order as the network receives it. The green box is the range where neurons can respond. Right: the delivery times in your records; red dots are broken records lasting hours.',
@@ -59,7 +59,7 @@ export const stages: Stage[] = [
   {
     id: 'design',
     name: 'Design',
-    syllabus: 'Choice of network architecture',
+    syllabus: 'L36 · Choice of network architecture',
     question: 'How many hidden neurons?',
     why: 'Each hidden neuron adds one bend to what the network can draw. Too few and it cannot follow the rush hours. Too many for the data you have and it memorises individual orders instead of the pattern.',
     picture: 'The network: two inputs, your hidden neurons, one output in minutes. The bar compares its number of weights with the number of training orders. You want several orders for every weight.',
@@ -74,7 +74,7 @@ export const stages: Stage[] = [
   {
     id: 'train',
     name: 'Train',
-    syllabus: 'Weight initialization · Choice of training algorithm · Stopping criteria · Performance function',
+    syllabus: 'L37–38 · Weight initialization · Choice of training algorithm · Stopping criteria · Performance function',
     question: 'Which algorithm, what learning rate, when to stop, how many starts?',
     why: 'Training rolls the weights downhill on the error. A learning rate that is too high makes the error explode. Stopping when the validation error stops improving prevents memorising. Different starting weights end in different places, so several starts are safer than one.',
     picture: 'Top: predicted delivery time through the day for a 2 km order (blue) and a 7 km order (pink), with nearby training orders as dots. Bottom: error on training orders (blue) and validation orders (amber) as training runs.',
@@ -89,7 +89,7 @@ export const stages: Stage[] = [
   {
     id: 'inspect',
     name: 'Inspect',
-    syllabus: 'Post-training analysis · Overfitting and extrapolation',
+    syllabus: 'L38–40 · Post-training analysis · Overfitting and extrapolation',
     question: 'Is it good enough to ship, and where can it not be trusted?',
     why: 'Three errors tell the story. All high: the network is too weak or badly trained. Training low but test high: it memorised. All low: good, but only for the situations your data covers. A square marked "no test data" is not safe; it is unknown.',
     picture: 'Left: each test order, real time across and predicted time up. On the dashed line means perfect. Right: error in each situation. Grey squares have no test orders at all.',
@@ -104,7 +104,7 @@ export const stages: Stage[] = [
   {
     id: 'ship',
     name: 'Ship',
-    syllabus: 'Applications and case studies · Prediction',
+    syllabus: 'L40–42 · Applications and case studies · Prediction',
     question: 'How many minutes of safety do we add to each promise?',
     why: 'A promise that is too short gets broken, and broken promises are refunded. A promise that is too long sends the customer to a rival app. The buffer trades one against the other, and no buffer can rescue a model that is blind.',
     picture: 'Each square is one live order: green arrived on time, red arrived late and was refunded, grey went to a rival because the promise was too long. After the month, the map shows where orders went wrong.',

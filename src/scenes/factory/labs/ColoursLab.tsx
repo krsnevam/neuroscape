@@ -6,7 +6,7 @@ import Label3D from '../../../components/Label3D'
 import LabShell from '../../../ui/lab/LabShell'
 import { useTicker } from '../../../ui/lab/Canvas2D'
 import { Btn, Group, Seg, Stat, Stats, Toggle } from '../../../ui/lab/controls'
-import { createSom, gauss, hits, quantError, rng, somStep, topoError, type Som, type Vec } from '../../../engine'
+import { createSom, gauss, hits, quantError, rng, somStep, topoError, umatrix, type Som, type Vec } from '../../../engine'
 import { useAppStore } from '../../../store/useAppStore'
 
 const ROWS = 8
@@ -39,6 +39,20 @@ function samplePixels(source: CanvasImageSource): { data: Vec[]; preview: string
     return [px[k] / 255, px[k + 1] / 255, px[k + 2] / 255]
   })
   return { data, preview: c.toDataURL('image/jpeg', 0.7) }
+}
+
+type MapView = 'colours' | 'distance' | 'hits' | 'planes'
+const grey = (v: number) => {
+  const g = Math.round(Math.min(1, Math.max(0, v)) * 255)
+  return `rgb(${g},${g},${g})`
+}
+const planeNames = ['red', 'green', 'blue']
+/** One input's weight as brightness of that input's own colour. */
+const planeTint = (k: number, v: number) => {
+  const x = Math.min(1, Math.max(0, v))
+  const c = [0.05 + 0.18 * x, 0.05 + 0.18 * x, 0.07 + 0.18 * x]
+  c[k] = 0.1 + 0.9 * x
+  return css(c)
 }
 
 interface Sim {
@@ -120,6 +134,7 @@ export default function ColoursLab() {
   const [neighbourhood, setNeighbourhood] = useState(true)
   const [init, setInit] = useState<'data' | 'corner'>('data')
   const [version, setVersion] = useState(0)
+  const [mapView, setMapView] = useState<MapView>('colours')
   const file = useRef<HTMLInputElement>(null)
   useTicker(400)
 
@@ -168,6 +183,12 @@ export default function ColoursLab() {
 
   const h = hits(sim.som, sim.data)
   const dead = h.filter((v) => v === 0).length
+  const maxHits = Math.max(1, ...h)
+  const u = umatrix(sim.som)
+  const maxU = Math.max(1e-6, ...u)
+  const minU = Math.min(...u)
+  const border = u.filter((v) => v > 0.5 * maxU).length
+  const busiest = h.indexOf(maxHits)
   return (
     <LabShell
       labId="colours"
@@ -183,6 +204,15 @@ export default function ColoursLab() {
           </p>
           <p>
             {dead > 0 ? `${dead} neurons have not won a single pixel (marked × on the map).` : 'Every neuron wins some pixels: none is dead.'}
+          </p>
+          <p>
+            {mapView === 'distance'
+              ? `Distance map: each cell is shaded by how far its colour is from its grid neighbours (from ${minU.toFixed(2)} to ${maxU.toFixed(2)} now). The darkest cells, ${border} of them, are the walls between groups that differ most; the light patches are the clusters. Borders between similar colours are fainter.`
+              : mapView === 'hits'
+                ? `Hit histogram: the number in a cell is how many of the ${sim.data.length} pixels that neuron wins. The busiest neuron (row ${Math.floor(busiest / COLS) + 1}, column ${(busiest % COLS) + 1}) wins ${maxHits}; ${dead} win none.`
+                : mapView === 'planes'
+                  ? 'Weight planes: the same 8 × 8 map drawn three times, once for each input. Bright means that neuron holds a large weight for that input. Two planes that look alike mean those two inputs carry the same information.'
+                  : 'The small map shows the colour each neuron holds. Use "Map view" to read it the way an analyst does: distances, hits and weight planes.'}
           </p>
         </>
       }
@@ -240,6 +270,27 @@ export default function ColoursLab() {
             />
             <Btn onClick={() => setVersion((v) => v + 1)}>Restart training</Btn>
           </Group>
+          <Group title="Map view">
+            <Seg
+              value={mapView}
+              onChange={setMapView}
+              options={[
+                { value: 'colours', label: 'Colours' },
+                { value: 'distance', label: 'Distance map' },
+                { value: 'hits', label: 'Hits' },
+                { value: 'planes', label: 'Weight planes' },
+              ]}
+            />
+            <p className="text-[11px] text-slate-500">
+              {mapView === 'colours'
+                ? 'The colour each neuron holds.'
+                : mapView === 'distance'
+                  ? 'Light: this neuron is close to its neighbours. Dark: far, a border between clusters.'
+                  : mapView === 'hits'
+                    ? 'How many pixels each neuron wins. 0 is a dead neuron.'
+                    : 'One grid per input: the red, green and blue weight of every neuron.'}
+            </p>
+          </Group>
           <Group title="How good is the map?">
             <Stats>
               <Stat label="Quantisation error" value={quantError(sim.som, sim.data).toFixed(3)} />
@@ -263,19 +314,59 @@ export default function ColoursLab() {
         <OrbitControls enablePan={false} minDistance={5} maxDistance={18} autoRotate autoRotateSpeed={0.8} />
       </Canvas>
       <div className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-1 rounded-lg border border-white/10 bg-slate-950/85 p-2">
-        <span className="font-mono text-[9px] uppercase tracking-widest text-slate-500">The map · 8 × 8 neurons</span>
-        <div className="grid grid-cols-8 gap-0.5">
-          {sim.som.w.map((w, i) => (
-            <div
-              key={i}
-              className="grid h-4 w-4 place-items-center rounded-[2px] text-[9px] text-white/70 sm:h-5 sm:w-5"
-              style={{ background: css(w) }}
-            >
-              {h[i] === 0 ? '×' : ''}
-            </div>
-          ))}
-        </div>
-        <span className="text-[9px] text-slate-500">× = dead neuron</span>
+        <span className="font-mono text-[9px] uppercase tracking-widest text-slate-500">
+          {mapView === 'colours' ? 'The map' : mapView === 'distance' ? 'Distance map' : mapView === 'hits' ? 'Hit histogram' : 'Weight planes'} · 8 × 8 neurons
+        </span>
+        {mapView === 'planes' ? (
+          <div className="flex gap-2">
+            {planeNames.map((name, k) => (
+              <div key={name} className="flex flex-col gap-0.5">
+                <div className="grid grid-cols-8 gap-px">
+                  {sim.som.w.map((w, i) => (
+                    <div key={i} className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" style={{ background: planeTint(k, w[k]) }} />
+                  ))}
+                </div>
+                <span className="text-[9px] text-slate-400">{name} weight</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-8 gap-0.5">
+            {sim.som.w.map((w, i) => {
+              const big = mapView !== 'colours'
+              // Square root stretches the lighter end so weaker borders are still visible
+              const shade = 1 - Math.sqrt((u[i] - minU) / Math.max(1e-6, maxU - minU))
+              return (
+                <div
+                  key={i}
+                  className={`grid place-items-center rounded-[2px] font-mono ${
+                    big ? 'h-5 w-5 text-[8px] sm:h-6 sm:w-6 sm:text-[9px]' : 'h-4 w-4 text-[9px] text-white/70 sm:h-5 sm:w-5'
+                  }`}
+                  style={{
+                    background:
+                      mapView === 'colours'
+                        ? css(w)
+                        : mapView === 'distance'
+                          ? grey(0.06 + 0.94 * shade)
+                          : `rgba(56,189,248,${0.08 + 0.92 * (h[i] / maxHits)})`,
+                    color: mapView === 'hits' ? (h[i] / maxHits > 0.55 ? '#020617' : '#e2e8f0') : undefined,
+                  }}
+                >
+                  {mapView === 'hits' ? h[i] : mapView === 'colours' && h[i] === 0 ? '×' : ''}
+                </div>
+              )
+            })}
+          </div>
+        )}
+        <span className="text-[9px] text-slate-500">
+          {mapView === 'colours'
+            ? '× = dead neuron'
+            : mapView === 'distance'
+              ? 'dark = far from neighbours = cluster border'
+              : mapView === 'hits'
+                ? 'pixels won by each neuron'
+                : 'bright = large weight for that input'}
+        </span>
       </div>
     </LabShell>
   )

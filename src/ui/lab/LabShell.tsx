@@ -6,6 +6,7 @@ import { worlds } from '../../data/worlds'
 import { useAppStore } from '../../store/useAppStore'
 import FpsMeter from '../FpsMeter'
 import { stageOfStation, stages as missionStages } from '../../scenes/factory/mission/stages'
+import { deckHref, lecturesOfStation } from '../../data/unit5Plan'
 
 type LearnTab = 'picture' | 'network' | 'nuances' | 'theory' | 'complexity' | 'words'
 
@@ -57,6 +58,7 @@ export default function LabShell({
   const action = actions[step.kind]
   const next = labs[labs.findIndex((l) => l.id === labId) + 1]
   const missionStage = worldId === 'factory' ? stageOfStation(labId) : -1
+  const lectures = worldId === 'factory' ? lecturesOfStation(labId) : []
 
   useEffect(() => setShowAnswer(false), [stepIdx])
 
@@ -125,6 +127,22 @@ export default function LabShell({
               <p className="border-l-2 pl-2.5 text-[13px] font-semibold leading-snug text-white" style={{ borderColor: lab.color }}>
                 {lab.takeaway}
               </p>
+            )}
+            {lectures.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-slate-400">Lecture slides</span>
+                {lectures.map((l) => (
+                  <a
+                    key={l.code}
+                    href={deckHref(l.deck.file)}
+                    download
+                    title={`${l.code}: ${l.title} (PowerPoint, ${l.deck.slides} slides)`}
+                    className="rounded-md border border-white/15 bg-white/5 px-2 py-1 font-medium text-slate-100 hover:bg-white/10"
+                  >
+                    ↓ {l.code}
+                  </a>
+                ))}
+              </div>
             )}
             {lab.industry && (
               <div className="rounded-md border border-emerald-400/25 bg-emerald-400/10">
