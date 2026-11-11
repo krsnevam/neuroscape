@@ -5,6 +5,7 @@ import { labsByWorld } from '../../data/labRegistry'
 import { worlds } from '../../data/worlds'
 import { useAppStore } from '../../store/useAppStore'
 import FpsMeter from '../FpsMeter'
+import { stageOfStation, stages as missionStages } from '../../scenes/factory/mission/stages'
 
 type LearnTab = 'picture' | 'theory' | 'complexity' | 'words'
 
@@ -53,6 +54,7 @@ export default function LabShell({
   const step = lab.steps[stepIdx]
   const action = actions[step.kind]
   const next = labs[labs.findIndex((l) => l.id === labId) + 1]
+  const missionStage = worldId === 'factory' ? stageOfStation(labId) : -1
 
   useEffect(() => setShowAnswer(false), [stepIdx])
 
@@ -75,6 +77,29 @@ export default function LabShell({
         <FpsMeter />
       </header>
 
+      {missionStage >= 0 && (
+        <nav
+          aria-label="Where this station fits in the mission"
+          className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-white/10 bg-slate-950/40 px-3 py-1.5 text-[11px]"
+        >
+          <Link to="/world/factory/mission" className="mr-1 shrink-0 text-violet-300 underline">
+            The mission
+          </Link>
+          {missionStages.map((s, i) => (
+            <span
+              key={s.id}
+              className={`shrink-0 rounded px-2 py-0.5 ${
+                i === missionStage ? 'bg-violet-400/25 font-semibold text-violet-100' : 'text-slate-500'
+              }`}
+            >
+              {i + 1}. {s.name}
+            </span>
+          ))}
+          <span className="ml-2 hidden shrink-0 text-slate-400 md:inline">
+            This station goes deeper into stage {missionStage + 1}: {missionStages[missionStage].question}
+          </span>
+        </nav>
+      )}
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <main className="relative min-h-0 flex-1 overflow-hidden">{children}</main>
 

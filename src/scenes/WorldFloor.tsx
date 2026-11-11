@@ -12,7 +12,7 @@ import FpsMeter from '../ui/FpsMeter'
 import QualityToggle from '../ui/QualityToggle'
 import WorldIntroPanel from '../ui/WorldIntroPanel'
 import DeveloperSignal from '../ui/DeveloperSignal'
-import { worldIntros } from '../data/worldIntros'
+import { worldIntros, worldMissions } from '../data/worldIntros'
 
 const RADIUS = 6
 const CUBES = 27
@@ -148,6 +148,7 @@ export default function WorldFloor({ worldId }: { worldId: string }) {
   const done = labs.filter(isDone).length
   const [first, ...rest] = world.title.split(' ')
   const intro = worldIntros[worldId]
+  const mission = worldMissions[worldId]
   const [showIntro, setShowIntro] = useState(false)
 
   return (
@@ -193,6 +194,18 @@ export default function WorldFloor({ worldId }: { worldId: string }) {
           <p className="max-w-sm text-xs text-slate-400 sm:text-sm">
             {world.unit}: {world.topics}. Follow the belt, or walk into any station. {done} of {labs.length} proved.
           </p>
+          {mission && (
+            <div className="pointer-events-auto mt-2 flex max-w-sm flex-col gap-1">
+              <Link
+                to={`/world/${worldId}/${mission.id}`}
+                className="self-start rounded-md px-3.5 py-2 text-sm font-semibold text-slate-950 hover:brightness-110"
+                style={{ background: world.color }}
+              >
+                ▶ {mission.label}
+              </Link>
+              <span className="text-xs text-slate-400">{mission.blurb}</span>
+            </div>
+          )}
           {intro && (
             <button
               type="button"

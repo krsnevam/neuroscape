@@ -11,6 +11,15 @@ export interface WorldIntro {
   footer?: string
 }
 
+/** A world's single end-to-end game, shown as the main action on its floor. */
+export const worldMissions: Record<string, { id: string; label: string; blurb: string }> = {
+  factory: {
+    id: 'mission',
+    label: 'Play the mission: The Delivery Promise',
+    blurb: 'Start here. One model, six stages, one score. The stations below are the six stages in depth.',
+  },
+}
+
 export const worldIntros: Record<string, WorldIntro> = {
   factory: {
     button: 'How this works in industry',

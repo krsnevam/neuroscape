@@ -2,6 +2,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 
 /** Station id → lazily loaded component. Ids match src/data/factoryLabs.ts. */
 export const scenes: Record<string, LazyExoticComponent<ComponentType>> = {
+  mission: lazy(() => import('./mission/MissionGame')),
   traffic: lazy(() => import('./labs/TrafficLab')),
   sensor: lazy(() => import('./labs/SensorLab')),
   valley: lazy(() => import('./labs/ValleyLab')),

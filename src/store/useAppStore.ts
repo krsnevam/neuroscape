@@ -16,6 +16,9 @@ interface AppState {
   /** Factory stations whose Prove step the student has completed */
   doneLabs: string[]
   markLabDone: (id: string) => void
+  /** Best monthly profit reached in the Model Factory mission, in rupees */
+  missionBest: number | null
+  recordMission: (profit: number) => void
 }
 
 const defaultQuality = (): Quality => {
@@ -38,10 +41,13 @@ export const useAppStore = create<AppState>()(
       doneLabs: [],
       markLabDone: (id) =>
         set((s) => (s.doneLabs.includes(id) ? s : { doneLabs: [...s.doneLabs, id] })),
+      missionBest: null,
+      recordMission: (profit) =>
+        set((s) => (s.missionBest === null || profit > s.missionBest ? { missionBest: profit } : s)),
     }),
     {
       name: 'neuroscape',
-      partialize: (s) => ({ quality: s.quality, visited: s.visited, doneLabs: s.doneLabs }),
+      partialize: (s) => ({ quality: s.quality, visited: s.visited, doneLabs: s.doneLabs, missionBest: s.missionBest }),
     },
   ),
 )
