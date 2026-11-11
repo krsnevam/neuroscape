@@ -2,6 +2,7 @@
 import type { Lab } from './labs'
 import { factoryTheory } from './factoryTheory'
 import { factoryExplain } from './factoryExplain'
+import { factoryDeep } from './factoryDeep'
 
 const stations: Lab[] = [
   {
@@ -350,4 +351,4 @@ const stations: Lab[] = [
   },
 ]
 
-export const factoryLabs: Lab[] = stations.map((lab) => ({ ...lab, ...factoryTheory[lab.id], ...factoryExplain[lab.id] }))
+export const factoryLabs: Lab[] = stations.map((lab) => ({ ...lab, ...factoryTheory[lab.id], ...factoryExplain[lab.id], ...factoryDeep[lab.id] }))

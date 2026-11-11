@@ -26,6 +26,12 @@ export interface Lab {
   picture?: PictureKey[]
   /** How this exact idea is used at work today. Shown under "In industry". */
   industry?: LabIndustry
+  /** The neural network inside the station, spelled out. Shown under "ANN inside". */
+  network?: LabNetwork
+  /** Finer points that separate knowing the idea from using it well. Shown under "Nuances". */
+  nuances?: LabNuance[]
+  /** Notes for a tutor presenting the station to a class. Shown in tutor mode. */
+  tutor?: LabTutor
   /** Terms a first-time learner needs, in plain words. Shown under "Words to know". */
   words?: { term: string; meaning: string }[]
   /** The governing equation(s) in Hagan notation, shown under the story */
@@ -87,4 +93,37 @@ export interface LabIndustry {
   goesWrong: string
   /** Job titles of the people who do this work */
   roles: string
+}
+
+export interface LabNetwork {
+  /** Layers, sizes and transfer functions, e.g. "2-6-1: 2 inputs, 6 tansig neurons, 1 logsig output" */
+  architecture: string
+  /** One forward pass in Hagan notation, with what each symbol is here */
+  forward: string
+  /** The performance function and the learning rule that changes the weights */
+  learning: string
+  /** Why this network was chosen for this problem, and what else could do the job */
+  choices: string
+}
+
+export interface LabNuance {
+  /** The point, as a short statement */
+  point: string
+  /** Why it is true and why it matters */
+  detail: string
+  /** Something to do in this station that shows it */
+  tryIt?: string
+}
+
+export interface LabTutor {
+  /** Suggested minutes for the station in class */
+  minutes: number
+  /** A question or scene to open with, before touching the station */
+  opener: string
+  /** For each mission step: what to say and what to ask the class */
+  steps: Partial<Record<StepKind, { say: string; ask: string }>>
+  /** Wrong ideas students commonly hold, each with the correction */
+  misconceptions: { wrong: string; right: string }[]
+  /** One or two sentences to close with, linking to what comes next */
+  close: string
 }

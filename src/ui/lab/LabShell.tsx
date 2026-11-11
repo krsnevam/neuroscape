@@ -7,7 +7,7 @@ import { useAppStore } from '../../store/useAppStore'
 import FpsMeter from '../FpsMeter'
 import { stageOfStation, stages as missionStages } from '../../scenes/factory/mission/stages'
 
-type LearnTab = 'picture' | 'theory' | 'complexity' | 'words'
+type LearnTab = 'picture' | 'network' | 'nuances' | 'theory' | 'complexity' | 'words'
 
 export type StepActions = Partial<Record<StepKind, { label: string; run: () => void }>>
 
@@ -51,6 +51,8 @@ export default function LabShell({
   const [learn, setLearn] = useState<LearnTab | null>(lab.picture?.length ? 'picture' : null)
   const [showIndustry, setShowIndustry] = useState(false)
   const markLabDone = useAppStore((s) => s.markLabDone)
+  const tutorMode = useAppStore((s) => s.tutorMode)
+  const setTutorMode = useAppStore((s) => s.setTutorMode)
   const step = lab.steps[stepIdx]
   const action = actions[step.kind]
   const next = labs[labs.findIndex((l) => l.id === labId) + 1]
@@ -74,6 +76,19 @@ export default function LabShell({
           </div>
           <h1 className="truncate text-base font-semibold leading-tight text-white">{lab.title}</h1>
         </div>
+        {lab.tutor && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={tutorMode}
+            onClick={() => setTutorMode(!tutorMode)}
+            className={`shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-medium ${
+              tutorMode ? 'border-amber-400 bg-amber-400/20 text-amber-100' : 'border-white/15 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            Tutor<span className="hidden sm:inline"> mode</span> {tutorMode ? 'on' : 'off'}
+          </button>
+        )}
         <FpsMeter />
       </header>
 
@@ -150,6 +165,71 @@ export default function LabShell({
             {lab.equation && (
               <p className="rounded-md bg-white/5 px-2.5 py-1.5 font-mono text-xs leading-relaxed text-sky-200">{lab.equation}</p>
             )}
+            {tutorMode && lab.tutor && (
+              <div className="flex flex-col gap-2 rounded-md border border-amber-400/40 bg-amber-400/10 p-2.5 text-[13px] leading-snug text-amber-50">
+                <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">
+                  <span>Tutor notes · {stepLabels[step.kind]}</span>
+                  <span>about {lab.tutor.minutes} min</span>
+                </div>
+                {stepIdx === 0 && (
+                  <p>
+                    <b>Open with:</b> {lab.tutor.opener}
+                  </p>
+                )}
+                {lab.tutor.steps[step.kind] && (
+                  <>
+                    <p>
+                      <b>Say:</b> {lab.tutor.steps[step.kind]!.say}
+                    </p>
+                    <p>
+                      <b>Ask the class:</b> {lab.tutor.steps[step.kind]!.ask}
+                    </p>
+                  </>
+                )}
+                {action && (
+                  <button
+                    type="button"
+                    onClick={action.run}
+                    className="self-start rounded-md border border-amber-400/50 bg-amber-400/15 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/25"
+                  >
+                    Show it: {action.label}
+                  </button>
+                )}
+                <details>
+                  <summary className="cursor-pointer text-xs text-amber-200">Wrong ideas to listen for ({lab.tutor.misconceptions.length})</summary>
+                  <ul className="mt-1.5 flex flex-col gap-1.5 text-xs">
+                    {lab.tutor.misconceptions.map((m) => (
+                      <li key={m.wrong}>
+                        <span className="text-rose-200">“{m.wrong}”</span> <span className="text-amber-50">{m.right}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+                {stepIdx === lab.steps.length - 1 && (
+                  <p>
+                    <b>Close with:</b> {lab.tutor.close}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={stepIdx === 0}
+                    onClick={() => setStepIdx((i) => i - 1)}
+                    className="rounded border border-amber-400/30 px-2 py-1 text-xs disabled:opacity-40"
+                  >
+                    ← Previous step
+                  </button>
+                  <button
+                    type="button"
+                    disabled={stepIdx === lab.steps.length - 1}
+                    onClick={() => setStepIdx((i) => i + 1)}
+                    className="rounded border border-amber-400/30 px-2 py-1 text-xs disabled:opacity-40"
+                  >
+                    Next step →
+                  </button>
+                </div>
+              </div>
+            )}
             {happening && (
               <div className="rounded-md border border-sky-400/25 bg-sky-400/10 p-2.5" aria-live="polite">
                 <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-sky-300">What is happening now</div>
@@ -206,12 +286,14 @@ export default function LabShell({
                   I have my answer. Show the model answer
                 </button>
               ))}
-            {(lab.picture?.length || lab.theory || lab.complexity || lab.words?.length) && (
+            {(lab.picture?.length || lab.network || lab.nuances?.length || lab.theory || lab.complexity || lab.words?.length) && (
               <div className="rounded-md bg-white/5">
                 <div className="flex flex-wrap gap-1 p-1" role="tablist" aria-label="Learn more">
                   {(
                     [
                       ['picture', 'Picture', lab.picture?.length],
+                      ['network', 'ANN inside', lab.network],
+                      ['nuances', 'Nuances', lab.nuances?.length],
                       ['theory', 'Theory', lab.theory],
                       ['complexity', 'Complexity', lab.complexity],
                       ['words', 'Words', lab.words?.length],
@@ -249,6 +331,41 @@ export default function LabShell({
                       </div>
                     ))}
                   </div>
+                )}
+                {learn === 'network' && lab.network && (
+                  <dl className="flex flex-col gap-2 px-2.5 pb-3 pt-1 text-[13px] leading-snug">
+                    {(
+                      [
+                        ['The network', lab.network.architecture],
+                        ['One forward pass', lab.network.forward],
+                        ['How it learns', lab.network.learning],
+                        ['Why this network', lab.network.choices],
+                      ] as const
+                    ).map(([k, v]) => (
+                      <div key={k}>
+                        <dt className={learnHead}>{k}</dt>
+                        <dd className="text-slate-200">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {learn === 'nuances' && lab.nuances && (
+                  <ol className="flex flex-col gap-2.5 px-2.5 pb-3 pt-1 text-[13px] leading-snug">
+                    {lab.nuances.map((n, i) => (
+                      <li key={n.point}>
+                        <b className="font-semibold text-slate-100">
+                          {i + 1}. {n.point}
+                        </b>
+                        <p className="text-slate-300">{n.detail}</p>
+                        {n.tryIt && (
+                          <p className="mt-0.5 text-xs text-emerald-200">
+                            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-emerald-300">Try it </span>
+                            {n.tryIt}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
                 )}
                 {learn === 'theory' && lab.theory && (
                   <div className="flex flex-col gap-2.5 px-2.5 pb-3 pt-1 text-[13px] leading-snug text-slate-200">

@@ -47,7 +47,8 @@ function segRect(pl: ReturnType<typeof makePlot>, s: number) {
 export default function MissionGame() {
   const [cfg, setCfg] = useState<Config>(rushedConfig)
   const [stage, setStage] = useState(0)
-  const [tutor, setTutor] = useState(false)
+  const tutor = useAppStore((s) => s.tutorMode)
+  const setTutor = useAppStore((s) => s.setTutorMode)
   const [briefing, setBriefing] = useState(true)
   const [run, setRun] = useState<Run | null>(null)
   const [launch, setLaunch] = useState<{ shipment: Shipment; findings: Finding[]; at: number } | null>(null)
@@ -405,7 +406,7 @@ export default function MissionGame() {
           type="button"
           role="switch"
           aria-checked={tutor}
-          onClick={() => setTutor((v) => !v)}
+          onClick={() => setTutor(!tutor)}
           className={`ml-auto shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-medium ${
             tutor ? 'border-amber-400 bg-amber-400/20 text-amber-100' : 'border-white/15 text-slate-300 hover:bg-white/10'
           }`}
