@@ -50,8 +50,8 @@ export default function LecturePlanPanel({
         </header>
         <div className="flex flex-col gap-3 px-5 py-4">
           <p className="text-sm leading-relaxed text-slate-300">
-            Eight one-hour lectures. Each has a slide deck with speaker notes, one live element for the classroom, and
-            stations to open here.
+            Eight one-hour lectures. Each has a slide deck with speaker notes that opens here, one live element for the
+            classroom, and stations to open from the slides.
           </p>
           <ol className="flex flex-col gap-3">
             {unit5Plan.map((l) => (
@@ -88,15 +88,23 @@ export default function LecturePlanPanel({
                   })}
                 </div>
                 {l.mission && <p className="mt-1.5 text-[11px] text-slate-500">Mission: {l.mission}</p>}
-                <a
-                  href={deckHref(l.deck.file)}
-                  download
-                  className="mt-2.5 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-950 hover:brightness-110"
-                  style={{ background: color }}
-                >
-                  ↓ {l.code} slides
-                  <span className="font-normal opacity-80">PowerPoint · {l.deck.slides} slides</span>
-                </a>
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                  <Link
+                    to={`/world/${worldId}/slides/${l.code}`}
+                    className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-950 hover:brightness-110"
+                    style={{ background: color }}
+                  >
+                    ▶ Open {l.code} slides
+                    <span className="font-normal opacity-80">{l.deck.slides} slides</span>
+                  </Link>
+                  <a
+                    href={deckHref(l.deck.file)}
+                    download
+                    className="rounded-md border border-white/15 px-2.5 py-1.5 text-xs text-slate-300 hover:bg-white/10"
+                  >
+                    ↓ PowerPoint
+                  </a>
+                </div>
               </li>
             ))}
           </ol>

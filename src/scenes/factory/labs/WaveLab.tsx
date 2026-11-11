@@ -165,7 +165,7 @@ export default function WaveLab() {
       ctx.lineTo(X(i), bottom)
       ctx.stroke()
       ctx.fillStyle = '#94a3b8'
-      ctx.fillText(i % 24 === 0 ? dayNames[Math.floor(i / 24) % 7] : `${i % 24}h`, X(i), bottom + 5)
+      if (X(i) < nextX - 44) ctx.fillText(i % 24 === 0 ? dayNames[Math.floor(i / 24) % 7] : `${i % 24}h`, X(i), bottom + 5)
     }
     // The hour to be guessed
     ctx.fillStyle = 'rgba(250,204,21,0.07)'
@@ -207,8 +207,13 @@ export default function WaveLab() {
       }
     } else if (guess === null) {
       ctx.fillStyle = '#38bdf8'
-      ctx.textAlign = 'right'
-      ctx.fillText('tap here at the height you expect', right - 4, (top + bottom) / 2)
+      if (w >= 560) {
+        ctx.textAlign = 'right'
+        ctx.fillText('tap here at the height you expect', right - 4, top + 14)
+      } else {
+        ctx.textAlign = 'center'
+        ctx.fillText('tap', gx, top + 14)
+      }
     }
   }
 

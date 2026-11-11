@@ -184,6 +184,22 @@ const eqRuns = (e) => {
   return runs
 }
 
+/** In-app address of a station named on a slide (used only by the in-app viewer). */
+const STATION_PATHS = {
+  'The Delivery Promise': '/world/factory/mission',
+  'Silk Board Sampler': '/world/factory/traffic',
+  'Thermistor Bench': '/world/factory/sensor',
+  'Error Valley Race': '/world/factory/valley',
+  'UPI Fraud Alarm': '/world/factory/fraud',
+  'Battery Oracle': '/world/factory/battery',
+  'Chase Predictor': '/world/factory/cricket',
+  'Doodle Reader': '/world/factory/doodle',
+  'Colour Map': '/world/factory/colours',
+  'Finish My Move': '/world/factory/wave',
+  'Worlds 3 and 4': '/',
+}
+const pathOf = (name) => STATION_PATHS[name.trim()]
+
 /* ---------- slide kinds ---------- */
 
 const kinds = {
@@ -362,6 +378,8 @@ const kinds = {
     txt(s, d.ask, { x: rx + 0.3, y: 3.05, w: rw - 0.6, h: 1.7, fontSize: 17, color: C.white })
     txt(s, 'In NeuroScape', { x: rx + 0.3, y: 4.85, w: rw - 0.6, h: 0.4, fontSize: 14, bold: true, color: C.amber })
     txt(s, d.app, { x: rx + 0.3, y: 5.25, w: rw - 0.6, h: 0.95, fontSize: 15, color: 'D5DBF5' })
+    const to = pathOf(d.app.split(':')[0])
+    if (to && s.addLink) s.addLink({ x: rx + rw - 1.5, y: 4.78, w: 1.25, h: 0.4, to, label: 'Open →' })
   },
 
   app(pres, s, d) {
@@ -373,6 +391,8 @@ const kinds = {
       const x = MX + i * (w + gap)
       panel(pres, s, x, TOP, w, h, C.tint)
       chip(pres, s, x + 0.3, TOP + 0.3, st.where ?? 'World 5 station', C.navy, C.white, 11)
+      const to = pathOf(st.name)
+      if (to && s.addLink) s.addLink({ x: x + w - 1.55, y: TOP + 0.27, w: 1.25, h: 0.4, to, label: 'Open →' })
       txt(s, st.name, { x: x + 0.3, y: TOP + 0.75, w: w - 0.6, h: 0.9, fontFace: HEAD, fontSize: n > 3 ? 19 : 22, bold: true, valign: 'middle' })
       txt(s, 'Do', { x: x + 0.3, y: TOP + 1.75, w: w - 0.6, h: 0.3, fontSize: 13, bold: true, color: C.teal })
       txt(s, st.do, { x: x + 0.3, y: TOP + 2.07, w: w - 0.6, h: 1.25, fontSize: n > 3 ? 14 : 15 })
@@ -477,6 +497,97 @@ async function buildDeck(deck, outDir) {
   return fileName
 }
 
+/* ---------- scene export for the in-app viewer ---------- */
+
+const r3 = (v) => (typeof v === 'number' ? Math.round(v * 1000) / 1000 : v)
+
+/**
+ * Runs the same slide kinds against a recorder instead of PowerPoint, and returns every slide as a
+ * list of drawing operations in inches on a 13.333 x 7.5 canvas. The app renders these directly,
+ * so the deck seen in the browser and the .pptx come from one source.
+ */
+function buildScene(deck) {
+  const warn = console.warn
+  console.warn = () => {}
+  const pres = {
+    ShapeType: { ellipse: 'ellipse', roundRect: 'roundRect', rect: 'rect', line: 'line', rightArrow: 'rightArrow' },
+    charts: { LINE: 'line', BAR: 'bar', SCATTER: 'scatter' },
+  }
+  const runsOf = (text) =>
+    (Array.isArray(text) ? text : [{ text, options: {} }]).map((r) => {
+      const o = r.options ?? {}
+      const out = { text: r.text }
+      if (o.bold) out.bold = true
+      if (o.color) out.color = o.color
+      if (o.superscript) out.sup = true
+      if (o.subscript) out.sub = true
+      if (o.bullet) out.bullet = true
+      if (o.breakLine) out.br = true
+      if (o.paraSpaceAfter) out.gap = o.paraSpaceAfter
+      return out
+    })
+  const textOp = (text, o) => ({
+    t: 'text', x: r3(o.x), y: r3(o.y), w: r3(o.w), h: r3(o.h), runs: runsOf(text),
+    size: o.fontSize, bold: o.bold || undefined, color: o.color, align: o.align, valign: o.valign,
+    head: o.fontFace === HEAD || undefined, gap: o.paraSpaceAfter,
+  })
+  let section = null
+  const slides = deck.slides.map((d, i) => {
+    if (i === 0 && !d.section) d.section = 'Lecture'
+    if (d.section) section = d.section
+    const dark = DARK_KINDS.has(d.kind)
+    const ops = []
+    const s = {
+      addShape: (shape, o) =>
+        ops.push({
+          t: 'shape', shape, x: r3(o.x), y: r3(o.y), w: r3(o.w), h: r3(o.h),
+          fill: o.fill?.color, stroke: o.line?.width ? o.line.color : undefined, sw: o.line?.width || undefined,
+          r: o.rectRadius, flip: o.flipV || undefined,
+          end: o.line?.endArrowType === 'triangle' || undefined, begin: o.line?.beginArrowType === 'triangle' || undefined,
+        }),
+      addText: (text, o) => {
+        if (!o.placeholder) ops.push(textOp(text, o))
+      },
+      addTable: (rows, o) =>
+        ops.push({
+          t: 'table', x: r3(o.x), y: r3(o.y), w: r3(o.w), colW: o.colW.map(r3), rowH: o.rowH,
+          rows: rows.map((row) => row.map((c) => ({ text: c.text, bold: c.options.bold || undefined, color: c.options.color, fill: c.options.fill.color, size: c.options.fontSize }))),
+        }),
+      addChart: (kind, data, o) => {
+        const scatter = kind === 'scatter'
+        ops.push({
+          t: 'chart', kind, x: r3(o.x), y: r3(o.y), w: r3(o.w), h: r3(o.h),
+          labels: scatter ? undefined : data[0].labels,
+          xs: scatter ? data[0].values.map(r3) : undefined,
+          series: (scatter ? data.slice(1) : data).map((q) => ({ name: q.name, values: q.values.map(r3) })),
+          colors: o.chartColors, xTitle: o.catAxisTitle, yTitle: o.valAxisTitle,
+          every: o.catAxisLabelFrequency, min: o.valAxisMinVal, max: o.valAxisMaxVal,
+        })
+      },
+      addNotes: () => {},
+      addLink: (o) => ops.push({ t: 'link', ...o, x: r3(o.x), y: r3(o.y) }),
+    }
+    if (!dark) {
+      const phase = { pre: 0, train: 1, post: 2, all: 3, none: -1 }[d.phase ?? deck.phase ?? 'all']
+      let x = MX
+      PHASES.forEach((p, k) => {
+        const on = phase === k || phase === 3
+        const w = p.length * 0.085 + 0.35
+        s.addShape('rect', { x, y: 6.93, w, h: 0.3, fill: { color: on ? C.teal : C.tint } })
+        s.addText(p, { x, y: 6.93, w, h: 0.3, align: 'center', valign: 'middle', fontSize: 10.5, bold: on, color: on ? C.white : C.mute })
+        x += w + 0.08
+      })
+      s.addText(`SETE08 · Unit 5 · ${deck.code}`, { x: 8.2, y: 6.93, w: 3.7, h: 0.3, align: 'right', valign: 'middle', fontSize: 10.5, color: C.mute })
+      s.addText(String(i + 1), { x: 12.1, y: 6.93, w: 0.63, h: 0.3, align: 'right', valign: 'middle', fontSize: 10.5, color: C.mute })
+      s.addText(d.title, { x: MX, y: 0.42, w: CW, h: 0.95, fontFace: HEAD, fontSize: 30, bold: true, color: C.ink, align: 'left', valign: 'middle' })
+    }
+    kinds[d.kind](pres, s, d, deck)
+    return { kind: d.kind, dark, title: d.title ?? deck.title, section, notes: d.notes ?? '', ops }
+  })
+  console.warn = warn
+  return { code: deck.code, date: deck.date, title: deck.title, syllabus: deck.syllabus, file: deck.file, slides }
+}
+
 /** The five-step design flow used as the map on most decks. `on` is the highlighted step (0-4). */
 const designFlow = (on) =>
   [
@@ -498,4 +609,4 @@ const caseFlow = (on) =>
     { h: 'Analyse', b: 'The tool for the task, and the verdict.' },
   ].map((s, i) => ({ ...s, on: i === on }))
 
-module.exports = { buildDeck, designFlow, caseFlow, C, W, H, MX, CW, TOP, BOTTOM }
+module.exports = { buildDeck, buildScene, designFlow, caseFlow, C, W, H, MX, CW, TOP, BOTTOM }

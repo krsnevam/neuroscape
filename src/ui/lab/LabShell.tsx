@@ -6,7 +6,7 @@ import { worlds } from '../../data/worlds'
 import { useAppStore } from '../../store/useAppStore'
 import FpsMeter from '../FpsMeter'
 import { stageOfStation, stages as missionStages } from '../../scenes/factory/mission/stages'
-import { deckHref, lecturesOfStation } from '../../data/unit5Plan'
+import { lecturesOfStation } from '../../data/unit5Plan'
 
 type LearnTab = 'picture' | 'network' | 'nuances' | 'theory' | 'complexity' | 'words'
 
@@ -132,15 +132,14 @@ export default function LabShell({
               <div className="flex flex-wrap items-center gap-1.5 text-xs">
                 <span className="text-slate-400">Lecture slides</span>
                 {lectures.map((l) => (
-                  <a
+                  <Link
                     key={l.code}
-                    href={deckHref(l.deck.file)}
-                    download
-                    title={`${l.code}: ${l.title} (PowerPoint, ${l.deck.slides} slides)`}
+                    to={`/world/factory/slides/${l.code}`}
+                    title={`${l.code}: ${l.title} (${l.deck.slides} slides)`}
                     className="rounded-md border border-white/15 bg-white/5 px-2 py-1 font-medium text-slate-100 hover:bg-white/10"
                   >
-                    ↓ {l.code}
-                  </a>
+                    ▶ {l.code}
+                  </Link>
                 ))}
               </div>
             )}

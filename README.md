@@ -60,9 +60,9 @@ Open `/#/world/factory`. Each station is built on an everyday example and follow
 
 ### Lecture plan and slides
 
-The floor's "Lecture plan and slides" button lists the eight Unit V hours (L35 to L42) from `src/data/unit5Plan.ts`: what each teaches, its live classroom element, the stations to open and a PowerPoint deck to download. Each station also links the decks of the lectures it is used in.
+The floor's "Lecture plan and slides" button lists the eight Unit V hours (L35 to L42) from `src/data/unit5Plan.ts`: what each teaches, its live classroom element and the stations to open. Each deck opens inside the app at `/#/world/factory/slides/L35` (arrow keys or a click to move, N for speaker notes, F to present), and the "Open" buttons on its slides lead to the stations. A PowerPoint copy of every deck can be downloaded. Each station also links the decks of the lectures it is used in.
 
-The decks live in `public/slides` and are generated from `scripts/slides/decks/L35.cjs` to `L42.cjs` with the slide kit in `scripts/slides/lib.cjs`. Edit a deck file and run `npm run slides` (or `npm run slides -- L37` for one deck). Every slide carries speaker notes.
+The decks live in `public/slides` (a `.pptx` to download and a `.json` the app draws, both from one source) and are generated from `scripts/slides/decks/L35.cjs` to `L42.cjs` with the slide kit in `scripts/slides/lib.cjs`. Edit a deck file and run `npm run slides` (or `npm run slides -- L37` for one deck). Every slide carries speaker notes.
 
 The camera, photo and phone-tilt inputs need HTTPS (or localhost) and the user's permission; every station also works without them.
 
