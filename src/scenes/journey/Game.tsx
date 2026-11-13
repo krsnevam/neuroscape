@@ -6,6 +6,7 @@ import { useAppStore } from '../../store/useAppStore'
 import { drawPlane, type View } from './draw'
 import { burst, cameraFor, drawGame, DURATION, SLING, stepShards, toWorld, type Flight, type Phase, type Scene } from './gameDraw'
 import { levels, tutorFor } from './levels'
+import WeightLab from './WeightLab'
 import {
   actFn,
   applyStep,
@@ -127,6 +128,9 @@ export default function Game() {
       if (id === 'first') {
         if (!keepNet) sc.net = cloneNet(trained)
         sc.queue = [[1.5, 55], [5.2, 84], [8.6, 72]]
+      } else if (id === 'weights') {
+        sc.net = cloneNet(trained)
+        sc.queue = []
       } else if (id === 'fix') {
         // knock out the hidden neuron that matters most
         const knocked = [0, 1, 2, 3].map((j) => {
@@ -436,7 +440,7 @@ export default function Game() {
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-teal-300">Predictive maintenance · level {levelIdx + 1} of {levels.length}</div>
           <h1 className="truncate text-base font-semibold leading-tight text-white">The Journey of a Signal: {level.name}</h1>
         </div>
-        <nav className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1 sm:justify-center" aria-label="Levels">
+        <nav className="order-last flex w-full min-w-0 gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1" aria-label="Levels">
           {levels.map((l, i) => (
             <button
               key={l.id}
@@ -465,7 +469,8 @@ export default function Game() {
         </button>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+      {level.id === 'weights' && <WeightLab data={data} trained={trained} tutor={tutor} onNext={() => gotoLevel(levelIdx + 1)} />}
+      <div className={`${level.id === 'weights' ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden`}>
         <main className="relative h-[560px] shrink-0 overflow-hidden lg:h-auto lg:min-h-0 lg:flex-1">
           <Canvas2D
             draw={draw}

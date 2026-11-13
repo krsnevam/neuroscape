@@ -233,6 +233,51 @@ export function evaluate(net: Net, data: Sample[]) {
   return { loss: loss / data.length, acc: right / data.length }
 }
 
+/** One adjustable number in the network: a weight on a wire, or a neuron's bias. */
+export type ParamRef = { kind: 'W1'; j: number; i: number } | { kind: 'b1'; j: number } | { kind: 'W2'; k: number; j: number } | { kind: 'b2'; k: number }
+
+export function getParam(net: Net, r: ParamRef) {
+  return r.kind === 'W1' ? net.W1[r.j][r.i] : r.kind === 'b1' ? net.b1[r.j] : r.kind === 'W2' ? net.W2[r.k][r.j] : net.b2[r.k]
+}
+export function setParam(net: Net, r: ParamRef, v: number) {
+  if (r.kind === 'W1') net.W1[r.j][r.i] = v
+  else if (r.kind === 'b1') net.b1[r.j] = v
+  else if (r.kind === 'W2') net.W2[r.k][r.j] = v
+  else net.b2[r.k] = v
+}
+
+/** In words: which wire or bias this is. */
+export function describeParam(r: ParamRef) {
+  if (r.kind === 'W1') return `the wire from ${INPUTS[r.i].short} to hidden neuron ${r.j + 1}`
+  if (r.kind === 'b1') return `the bias of hidden neuron ${r.j + 1}`
+  if (r.kind === 'W2') return `the wire from hidden neuron ${r.j + 1} to "${CLASSES[r.k]}"`
+  return `the bias of the "${CLASSES[r.k]}" output`
+}
+
+/**
+ * The slope of the average cost for one weight, over all the logged readings:
+ * the average of (blame at the neuron the wire feeds) x (signal the wire carried).
+ */
+export function slopeOf(net: Net, data: Sample[], r: ParamRef) {
+  let sum = 0
+  for (const m of data) {
+    const g = backward(net, forward(net, encode(m.x)), m.label)
+    sum += r.kind === 'W1' ? g.W1[r.j][r.i] : r.kind === 'b1' ? g.b1[r.j] : r.kind === 'W2' ? g.W2[r.k][r.j] : g.b2[r.k]
+  }
+  return sum / data.length
+}
+
+/** The average cost the network would have if this one weight took each of `values`, all others left alone. */
+export function costCurve(net: Net, data: Sample[], r: ParamRef, values: number[]) {
+  const keep = getParam(net, r)
+  const out = values.map((v) => {
+    setParam(net, r, v)
+    return evaluate(net, data).loss
+  })
+  setParam(net, r, keep)
+  return out
+}
+
 /** A network trained to completion, for "skip to the trained weights". */
 export function trainedNet(data: Sample[], act: Act = 'tansig', seed = 3, epochs = 1500): Net {
   const tr = createTrainer(randomNet(seed, act))

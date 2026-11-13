@@ -1,9 +1,9 @@
 import { journeyStages } from './stages'
 import type { Phase } from './gameDraw'
 
-/** The five levels of the playable journey. Each one hands the player one more idea. */
+/** The levels of the playable journey. Each one hands the player one more idea. */
 export interface Level {
-  id: 'first' | 'fix' | 'bend' | 'teach' | 'trust'
+  id: 'first' | 'weights' | 'fix' | 'bend' | 'teach' | 'trust'
   name: string
   goal: string
   brief: string
@@ -18,6 +18,13 @@ export const levels: Level[] = [
     goal: 'Launch three motors and watch each reading travel to a decision.',
     brief: 'This network is already trained. Pull the sling, let go, and follow the signal: encode, weigh, add, activate, weigh again, softmax, decode. The network fires its answer at one of three bays. A right answer knocks the crates down.',
     lesson: 'A reading becomes a decision in seven small steps, and every step is ordinary arithmetic.',
+  },
+  {
+    id: 'weights',
+    name: 'The weight workshop',
+    goal: 'Take one weight in your hand. See what it does, what breaks when you move it, and how training finds its value.',
+    brief: 'Every wire carries one number, its weight. Tap any wire. The valley in the middle shows the average cost over all 180 logged readings for every value that one weight could take. Drag the marker and watch the map and the score change. Then let training do what you just did by hand.',
+    lesson: 'A weight has no meaning alone. Its value is simply wherever the downhill steps left it, and the right place for one weight depends on where all the others are.',
   },
   {
     id: 'fix',
