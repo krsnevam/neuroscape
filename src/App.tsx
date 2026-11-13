@@ -4,7 +4,7 @@ import HubScene from './scenes/hub/HubScene'
 import LabRoute, { WorldRoute } from './scenes/LabRoute'
 
 const SlideDeck = lazy(() => import('./scenes/factory/slides/SlideDeck'))
-const Journey = lazy(() => import('./scenes/journey/Journey'))
+const Journey = lazy(() => import('./scenes/journey/JourneyPage'))
 
 export default function App() {
   return (

@@ -1,15 +1,16 @@
 import { drawAxes, drawCurve, dot, makePlot, type Plot } from '../../ui/lab/Canvas2D'
-import { actFn, boundaryLine, CLASSES, decode, encode, forward, HIDDEN, lossOf, type Grads, type Mango, type Net, type Pass } from './sim'
+import { actFn, boundaryLine, CLASSES, decode, encode, forward, HIDDEN, INPUTS, lossOf, outsideData, toUnit, type Grads, type Net, type Pass, type Reading, type Sample } from './sim'
 
 /** Everything the picture needs for one frame. */
 export interface View {
   stage: number
   net: Net
   pass: Pass
-  mango: { colour: number; soft: number }
+  /** The motor reading in hand: [vibration mm/s, bearing temperature °C] */
+  reading: Reading
   target: number
   focus: number
-  data: Mango[]
+  data: Sample[]
   sure: number
   history: { loss: number; acc: number }[]
   /** The last single-example step, so changed connections can flash */
@@ -25,7 +26,7 @@ interface Box {
   h: number
 }
 
-export const CLASS_COLORS = ['#4ade80', '#fbbf24', '#f97316']
+export const CLASS_COLORS = ['#4ade80', '#fbbf24', '#f87171']
 export const NEURON_COLORS = ['#38bdf8', '#a78bfa', '#f472b6', '#e2e8f0']
 const POS = '#2dd4bf'
 const NEG = '#fb7185'
@@ -54,15 +55,15 @@ function rgba(hex: string, a: number) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`
 }
 
-/** Green when raw, yellow when ripe, brown when it has gone too far. */
-export function mangoColour(c: number) {
+/** Cool steel blue when the bearing is cool, through orange to red when it runs hot. */
+export function heatColour(temp: number) {
   const stops: [number, number[]][] = [
-    [0, [47, 143, 58]],
-    [5, [196, 196, 58]],
-    [8, [246, 178, 27]],
-    [10, [150, 88, 26]],
+    [40, [96, 165, 250]],
+    [70, [148, 163, 184]],
+    [90, [251, 146, 60]],
+    [110, [239, 68, 68]],
   ]
-  const v = Math.max(0, Math.min(10, c))
+  const v = Math.max(40, Math.min(110, temp))
   let i = 0
   while (i < stops.length - 2 && v > stops[i + 1][0]) i++
   const [a, ca] = stops[i]
@@ -71,36 +72,65 @@ export function mangoColour(c: number) {
   return `rgb(${ca.map((x, j) => Math.round(x + (cb[j] - x) * k)).join(',')})`
 }
 
-function drawMango(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, colour: number, soft: number, t: number) {
-  const s = Math.max(0, Math.min(10, soft)) / 10
-  const wob = 1 + Math.sin(t * 2.2) * 0.012 * (1 + 3 * s)
+/** A motor on its base: it shakes with the vibration reading and glows with the temperature. */
+function drawMotor(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, x: Reading, t: number) {
+  const vib = Math.max(0, Math.min(13, x[0]))
+  const shake = vib * 0.035 * size * 0.12
+  const dx = Math.sin(t * 47) * shake
+  const dy = Math.cos(t * 61) * shake * 0.7
+  const w = size * 1.9
+  const h = size * 1.15
   ctx.save()
-  ctx.translate(cx, cy)
-  ctx.rotate(-0.35)
-  ctx.beginPath()
-  ctx.ellipse(0, 0, size * (1 + 0.12 * s) * wob, size * (0.72 - 0.1 * s) / wob, 0, 0, Math.PI * 2)
-  ctx.fillStyle = mangoColour(colour)
-  ctx.fill()
-  ctx.beginPath()
-  ctx.ellipse(-size * 0.3, -size * 0.22, size * 0.32, size * 0.14, -0.3, 0, Math.PI * 2)
-  ctx.fillStyle = 'rgba(255,255,255,0.22)'
-  ctx.fill()
-  // soft mangoes bruise
-  if (s > 0.7 || colour > 8.5) {
-    ctx.fillStyle = 'rgba(60,30,10,0.45)'
-    for (const [dx, dy, r] of [[0.35, 0.18, 0.11], [-0.1, 0.3, 0.08], [0.55, -0.12, 0.07]]) {
-      ctx.beginPath()
-      ctx.arc(size * dx, size * dy, size * r, 0, Math.PI * 2)
-      ctx.fill()
-    }
+  // base stays still
+  ctx.fillStyle = '#334155'
+  ctx.fillRect(cx - w * 0.6, cy + h / 2 + 4, w * 1.2, size * 0.14)
+  ctx.translate(cx + dx, cy + dy)
+  // heat glow around the bearing end
+  const hot = Math.max(0, (x[1] - 70) / 40)
+  if (hot > 0) {
+    ctx.fillStyle = `rgba(239,68,68,${0.1 + 0.25 * Math.min(1, hot)})`
+    ctx.beginPath()
+    ctx.arc(w / 2, 0, size * (0.5 + 0.25 * hot), 0, Math.PI * 2)
+    ctx.fill()
   }
-  ctx.strokeStyle = '#3f6212'
-  ctx.lineWidth = 3
+  // shaft and coupling
+  ctx.fillStyle = '#94a3b8'
+  ctx.fillRect(w / 2, -size * 0.09, size * 0.75, size * 0.18)
+  ctx.fillStyle = '#64748b'
+  ctx.fillRect(w / 2 + size * 0.55, -size * 0.2, size * 0.2, size * 0.4)
+  // body with cooling fins
+  ctx.fillStyle = '#475569'
   ctx.beginPath()
-  ctx.moveTo(size * 0.95, -size * 0.1)
-  ctx.lineTo(size * 1.15, -size * 0.3)
-  ctx.stroke()
+  ctx.roundRect(-w / 2, -h / 2, w, h, size * 0.16)
+  ctx.fill()
+  ctx.strokeStyle = '#1e293b'
+  ctx.lineWidth = 2
+  for (let i = 1; i < 7; i++) {
+    const fx = -w / 2 + (i / 7) * w * 0.78
+    ctx.beginPath()
+    ctx.moveTo(fx, -h / 2 + 5)
+    ctx.lineTo(fx, h / 2 - 5)
+    ctx.stroke()
+  }
+  // bearing housing, coloured by temperature
+  ctx.fillStyle = heatColour(x[1])
+  ctx.beginPath()
+  ctx.roundRect(w / 2 - size * 0.34, -h * 0.36, size * 0.34, h * 0.72, 4)
+  ctx.fill()
+  // the sensor module clamped on top
+  ctx.fillStyle = '#0f766e'
+  ctx.fillRect(w / 2 - size * 0.4, -h / 2 - size * 0.2, size * 0.42, size * 0.2)
+  dot(ctx, w / 2 - size * 0.19, -h / 2 - size * 0.1, 2.5, (t * 2) % 1 < 0.5 ? '#5eead4' : '#134e4a')
   ctx.restore()
+  // vibration marks
+  ctx.strokeStyle = `rgba(226,232,240,${Math.min(0.8, vib / 8)})`
+  ctx.lineWidth = 1.5
+  for (const side of [-1, 1])
+    for (let k = 1; k <= 2; k++) {
+      ctx.beginPath()
+      ctx.arc(cx + side * (w * 0.5 + (side > 0 ? size * 0.85 : 0)), cy, size * 0.25 * k + shake * 2, side > 0 ? -0.6 : Math.PI - 0.6, side > 0 ? 0.6 : Math.PI + 0.6)
+      ctx.stroke()
+    }
 }
 
 /* ---------------- the network, always on screen ---------------- */
@@ -191,7 +221,7 @@ function drawNetwork(ctx: CanvasRenderingContext2D, b: Box, v: View) {
     ctx.globalAlpha = 1
   }
 
-  const names = ['colour', 'softness']
+  const names = INPUTS.map((q) => q.short)
   for (let i = 0; i < 2; i++) {
     node(xin, inY(i), rgba('#64748b', 0.35), stage === 0 ? '#f8fafc' : '#64748b', f2(pass.p[i]), 1, stage === 0 ? 2.5 : 1.5)
     label(ctx, `p${i === 0 ? '₁' : '₂'} ${names[i]}`, xin, inY(i) - r - 9, { align: 'center', color: '#cbd5e1' })
@@ -226,7 +256,7 @@ function drawNetwork(ctx: CanvasRenderingContext2D, b: Box, v: View) {
 
 /* ---------------- the input plane ---------------- */
 
-function drawPlane(
+export function drawPlane(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
@@ -234,11 +264,14 @@ function drawPlane(
   v: View,
   o: { lines: number[]; shade?: number; vector?: number; regions?: boolean; wide?: boolean },
 ): Plot {
-  const lo = o.wide ? -3 : 0
-  const hi = o.wide ? 13 : 10
-  const pl = makePlot(w, h, [lo, hi], [lo, hi], { l: b.x + 40, r: w - (b.x + b.w) + 10, t: b.y + 8, b: h - (b.y + b.h) + 30 })
+  // the plane is drawn in sensor units; the wide view reaches 30% beyond each sensor's logged range
+  const ext = o.wide ? 1.6 : 1
+  const xr: [number, number] = [toUnit(0, -ext), toUnit(0, ext)]
+  const yr: [number, number] = [toUnit(1, -ext), toUnit(1, ext)]
+  const pl = makePlot(w, h, xr, yr, { l: b.x + 44, r: w - (b.x + b.w) + 10, t: b.y + 8, b: h - (b.y + b.h) + 30 })
   const pw = pl.right - pl.left
   const ph = pl.bottom - pl.top
+  const at = (i: number, j: number, N: number): Reading => [xr[0] + ((i + 0.5) / N) * (xr[1] - xr[0]), yr[1] - ((j + 0.5) / N) * (yr[1] - yr[0])]
   ctx.save()
   ctx.beginPath()
   ctx.rect(pl.left, pl.top, pw, ph)
@@ -250,9 +283,7 @@ function drawPlane(
     const ch = ph / N
     for (let i = 0; i < N; i++)
       for (let j = 0; j < N; j++) {
-        const c = lo + ((i + 0.5) / N) * (hi - lo)
-        const s = hi - ((j + 0.5) / N) * (hi - lo)
-        const d = decode(forward(v.net, encode(c, s)).a2)
+        const d = decode(forward(v.net, encode(at(i, j, N))).a2)
         ctx.fillStyle = rgba(CLASS_COLORS[d.k], 0.06 + 0.3 * Math.max(0, (d.confidence - 0.34) / 0.66))
         ctx.fillRect(pl.left + i * cw, pl.top + j * ch, cw + 0.6, ch + 0.6)
       }
@@ -265,7 +296,7 @@ function drawPlane(
     ctx.fillStyle = rgba(NEURON_COLORS[o.shade], 0.13)
     for (let i = 0; i < N; i++)
       for (let j = 0; j < N; j++) {
-        const p = encode(lo + ((i + 0.5) / N) * (hi - lo), hi - ((j + 0.5) / N) * (hi - lo))
+        const p = encode(at(i, j, N))
         if (wj[0] * p[0] + wj[1] * p[1] + v.net.b1[o.shade] > 0) ctx.fillRect(pl.left + i * cw, pl.top + j * ch, cw + 0.6, ch + 0.6)
       }
   }
@@ -273,10 +304,10 @@ function drawPlane(
     ctx.strokeStyle = 'rgba(226,232,240,0.6)'
     ctx.setLineDash([5, 4])
     ctx.lineWidth = 1.2
-    ctx.strokeRect(pl.X(0), pl.Y(10), pl.X(10) - pl.X(0), pl.Y(0) - pl.Y(10))
+    ctx.strokeRect(pl.X(INPUTS[0].min), pl.Y(INPUTS[1].max), pl.X(INPUTS[0].max) - pl.X(INPUTS[0].min), pl.Y(INPUTS[1].min) - pl.Y(INPUTS[1].max))
     ctx.setLineDash([])
   }
-  for (const m of v.data) dot(ctx, pl.X(m.colour), pl.Y(m.soft), o.wide ? 2.2 : 3, rgba(CLASS_COLORS[m.label], 0.85))
+  for (const m of v.data) dot(ctx, pl.X(m.x[0]), pl.Y(m.x[1]), o.wide ? 2.2 : 3, rgba(CLASS_COLORS[m.label], 0.85))
 
   for (const j of o.lines) {
     const seg = boundaryLine(v.net.W1[j], v.net.b1[j])
@@ -296,14 +327,15 @@ function drawPlane(
     const wj = v.net.W1[o.vector]
     const m2 = wj[0] * wj[0] + wj[1] * wj[1]
     if (m2 > 1e-6) {
+      // foot of the arrow: the point on the line nearest the middle of the ranges
       const k = -v.net.b1[o.vector] / m2
-      const x0 = Math.max(lo + 0.6, Math.min(hi - 0.6, k * wj[0] * 5 + 5))
-      const y0 = Math.max(lo + 0.6, Math.min(hi - 0.6, k * wj[1] * 5 + 5))
-      const len = 1.7 / Math.sqrt(m2)
-      const x1 = pl.X(x0 + wj[0] * len)
-      const y1 = pl.Y(y0 + wj[1] * len)
-      const ax = pl.X(x0)
-      const ay = pl.Y(y0)
+      const lim = ext - 0.12
+      const p0 = [Math.max(-lim, Math.min(lim, k * wj[0])), Math.max(-lim, Math.min(lim, k * wj[1]))]
+      const len = 0.34 / Math.sqrt(m2)
+      const ax = pl.X(toUnit(0, p0[0]))
+      const ay = pl.Y(toUnit(1, p0[1]))
+      const x1 = pl.X(toUnit(0, p0[0] + wj[0] * len))
+      const y1 = pl.Y(toUnit(1, p0[1] + wj[1] * len))
       ctx.strokeStyle = '#f8fafc'
       ctx.fillStyle = '#f8fafc'
       ctx.lineWidth = 2
@@ -317,23 +349,27 @@ function drawPlane(
       ctx.lineTo(x1 - 9 * Math.cos(ang - 0.4), y1 - 9 * Math.sin(ang - 0.4))
       ctx.lineTo(x1 - 9 * Math.cos(ang + 0.4), y1 - 9 * Math.sin(ang + 0.4))
       ctx.fill()
-      label(ctx, 'w', x1 + 8 * Math.cos(ang), y1 + 8 * Math.sin(ang), { color: '#f8fafc', bold: true, align: 'center' })
+      label(ctx, 'w', x1 + 9 * Math.cos(ang), y1 + 9 * Math.sin(ang), { color: '#f8fafc', bold: true, align: 'center' })
     }
   }
-  // the mango in hand
-  const mx = pl.X(Math.max(lo, Math.min(hi, v.mango.colour)))
-  const my = pl.Y(Math.max(lo, Math.min(hi, v.mango.soft)))
+  // the reading in hand
+  const mx = pl.X(Math.max(xr[0], Math.min(xr[1], v.reading[0])))
+  const my = pl.Y(Math.max(yr[0], Math.min(yr[1], v.reading[1])))
   const pulse = 9 + Math.sin(v.t * 4) * 1.5
   ctx.strokeStyle = '#f8fafc'
   ctx.lineWidth = 2.5
   ctx.beginPath()
   ctx.arc(mx, my, pulse, 0, Math.PI * 2)
   ctx.stroke()
-  dot(ctx, mx, my, 5, mangoColour(v.mango.colour))
+  dot(ctx, mx, my, 5, '#f8fafc')
   ctx.restore()
 
-  const ticks = o.wide ? [0, 5, 10] : [0, 2.5, 5, 7.5, 10]
-  drawAxes(ctx, pl, { xTicks: ticks, yTicks: ticks, xLabel: 'colour: green → yellow → dark', yLabel: 'softness' })
+  drawAxes(ctx, pl, {
+    xTicks: [0, 2.5, 5, 7.5, 10],
+    yTicks: [40, 60, 80, 100],
+    xLabel: 'vibration, mm/s',
+    yLabel: 'bearing temperature, °C',
+  })
   return pl
 }
 
@@ -350,30 +386,28 @@ function hbar(ctx: CanvasRenderingContext2D, x0: number, y: number, half: number
 /* ---------------- one detail view per stop ---------------- */
 
 function detailEncode(ctx: CanvasRenderingContext2D, b: Box, v: View) {
-  const size = Math.min(70, b.w * 0.14, b.h * 0.16)
-  drawMango(ctx, b.x + b.w / 2, b.y + size + 18, size, v.mango.colour, v.mango.soft, v.t)
-  const rows = [
-    { name: 'Colour', raw: v.mango.colour, p: v.pass.p[0], ends: ['green', 'dark yellow'] },
-    { name: 'Softness', raw: v.mango.soft, p: v.pass.p[1], ends: ['hard', 'very soft'] },
-  ]
+  const size = Math.min(64, b.w * 0.12, b.h * 0.14)
+  drawMotor(ctx, b.x + b.w / 2 - size * 0.3, b.y + size + 30, size, v.reading, v.t)
+  label(ctx, 'Sensor module on the motor', b.x + b.w / 2, b.y + size * 2 + 62, { align: 'center', size: 11 })
   const x0 = b.x + 34
   const x1 = b.x + b.w - 34
-  const startY = b.y + size * 2 + 56
-  const gap = Math.max(96, (b.y + b.h - startY) / 2)
-  rows.forEach((r, i) => {
+  const startY = b.y + size * 2 + 118
+  const gap = Math.max(100, (b.y + b.h - startY) / 2)
+  INPUTS.forEach((q, i) => {
+    const raw = v.reading[i]
     const y = startY + i * gap
-    label(ctx, `${r.name}: measured ${r.raw.toFixed(1)} on a 0 to 10 scale`, x0, y - 22, { color: '#e2e8f0', size: 12, bold: true })
-    const X = (val: number) => x0 + (Math.max(0, Math.min(10, val)) / 10) * (x1 - x0)
-    // measured scale
+    label(ctx, `${q.name}: ${raw.toFixed(q.digits)} ${q.unit}`, x0, y - 22, { color: '#e2e8f0', size: 12, bold: true })
+    const X = (val: number) => x0 + ((Math.max(q.min, Math.min(q.max, val)) - q.min) / (q.max - q.min)) * (x1 - x0)
+    // the sensor's own scale
     ctx.strokeStyle = '#475569'
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(x0, y)
     ctx.lineTo(x1, y)
     ctx.stroke()
-    label(ctx, `0 ${r.ends[0]}`, x0, y + 12, { size: 10 })
-    label(ctx, `${r.ends[1]} 10`, x1, y + 12, { size: 10, align: 'right' })
-    dot(ctx, X(r.raw), y, 6, '#f8fafc')
+    label(ctx, `${q.min} ${q.unit}, ${q.low}`, x0, y + 12, { size: 10 })
+    label(ctx, `${q.high}, ${q.max} ${q.unit}`, x1, y + 12, { size: 10, align: 'right' })
+    dot(ctx, X(raw), y, 6, '#f8fafc')
     // the scale the network receives
     const y2 = y + 40
     ctx.strokeStyle = POS
@@ -381,10 +415,10 @@ function detailEncode(ctx: CanvasRenderingContext2D, b: Box, v: View) {
     ctx.moveTo(x0, y2)
     ctx.lineTo(x1, y2)
     ctx.stroke()
-    for (const [val, tx] of [[0, '−1'], [5, '0'], [10, '+1']] as [number, string][]) {
+    for (const [pn, tx] of [[-1, '−1'], [0, '0'], [1, '+1']] as [number, string][]) {
       ctx.fillStyle = POS
-      ctx.fillRect(X(val) - 0.5, y2 - 4, 1, 8)
-      label(ctx, tx, X(val), y2 + 13, { size: 10, align: 'center', color: POS, mono: true })
+      ctx.fillRect(X(toUnit(i, pn)) - 0.5, y2 - 4, 1, 8)
+      label(ctx, tx, X(toUnit(i, pn)), y2 + 13, { size: 10, align: 'center', color: POS, mono: true })
     }
     // the value travels down from one scale to the other
     const k = (v.t * 0.7 + i * 0.4) % 1
@@ -392,13 +426,15 @@ function detailEncode(ctx: CanvasRenderingContext2D, b: Box, v: View) {
     ctx.lineWidth = 1
     ctx.setLineDash([3, 3])
     ctx.beginPath()
-    ctx.moveTo(X(r.raw), y)
-    ctx.lineTo(X(r.raw), y2)
+    ctx.moveTo(X(raw), y)
+    ctx.lineTo(X(raw), y2)
     ctx.stroke()
     ctx.setLineDash([])
-    dot(ctx, X(r.raw), y + (y2 - y) * k, 3, '#f8fafc')
-    dot(ctx, X(r.raw), y2, 6, POS)
-    label(ctx, `p${i === 0 ? '₁' : '₂'} = (${r.raw.toFixed(1)} − 5) / 5 = ${f2(r.p)}`, x1, y - 22, { color: POS, mono: true, align: 'right', size: 12 })
+    dot(ctx, X(raw), y + (y2 - y) * k, 3, '#f8fafc')
+    dot(ctx, X(raw), y2, 6, POS)
+    const mid = (q.min + q.max) / 2
+    const half = (q.max - q.min) / 2
+    label(ctx, `p${i === 0 ? '₁' : '₂'} = (${raw.toFixed(q.digits)} − ${mid}) / ${half} = ${f2(v.pass.p[i])}`, x1, y - 22, { color: POS, mono: true, align: 'right', size: 12 })
   })
 }
 
@@ -467,7 +503,7 @@ function detailLayer(ctx: CanvasRenderingContext2D, w: number, h: number, b: Box
   const barsH = 122
   const pl = drawPlane(ctx, w, h, { ...b, h: b.h - barsH }, v, { lines: [0, 1, 2, 3] })
   const y0 = b.y + b.h - barsH + 22
-  label(ctx, 'The hidden layer\'s code for this mango, a¹', b.x + 6, y0 - 4, { color: '#e2e8f0', bold: true })
+  label(ctx, 'The hidden layer\'s code for this reading, a¹', b.x + 6, y0 - 4, { color: '#e2e8f0', bold: true })
   const cx = b.x + b.w * 0.56
   const half = b.w * 0.3
   const scale = v.net.act === 'relu' || v.net.act === 'linear' ? Math.max(1, ...v.pass.a1.map(Math.abs)) : 1
@@ -486,7 +522,7 @@ function detailDecode(ctx: CanvasRenderingContext2D, b: Box, v: View) {
   const win = decode(a2, v.sure)
   const ex = n2.map((x) => Math.exp(x))
   const sumEx = ex.reduce((x, y) => x + y, 0)
-  const labelW = 74
+  const labelW = 96
   const colW = (b.w - labelW - 16) / 3
   const colX = (c: number) => b.x + labelW + c * colW
   const top = b.y + 58
@@ -530,7 +566,7 @@ function detailDecode(ctx: CanvasRenderingContext2D, b: Box, v: View) {
   label(ctx, '4. Decode', b.x + 10, y, { color: '#e2e8f0', bold: true, size: 12 })
   if (win.confident) label(ctx, `${win.label}, ${(win.confidence * 100).toFixed(0)}% sure`, b.x + 10, y + 30, { color: CLASS_COLORS[win.k], size: 24, bold: true })
   else label(ctx, `Not sure. Best guess: ${win.label}, ${(win.confidence * 100).toFixed(0)}%`, b.x + 10, y + 30, { color: '#e2e8f0', size: 20, bold: true })
-  label(ctx, `White mark: the "sure" level, ${(v.sure * 100).toFixed(0)}%. A seller would call this mango ${CLASSES[v.target]}.`, b.x + 10, y + 58, { size: 11 })
+  label(ctx, `White mark: the "sure" level, ${(v.sure * 100).toFixed(0)}%. The engineer's log says: ${CLASSES[v.target]}.`, b.x + 10, y + 58, { size: 11 })
 }
 
 function detailError(ctx: CanvasRenderingContext2D, w: number, h: number, b: Box, v: View) {
@@ -542,8 +578,8 @@ function detailError(ctx: CanvasRenderingContext2D, w: number, h: number, b: Box
   for (let k = 0; k < 3; k++) {
     const y = left.y + 44 + k * rowH
     label(ctx, CLASSES[k], left.x + 6, y, { color: CLASS_COLORS[k], bold: true })
-    const x0 = left.x + 74
-    const bw = left.w - 74 - 52
+    const x0 = left.x + 96
+    const bw = left.w - 96 - 52
     ctx.fillStyle = 'rgba(148,163,184,0.12)'
     ctx.fillRect(x0, y - 9, bw, 18)
     ctx.fillStyle = CLASS_COLORS[k]
@@ -582,7 +618,7 @@ function detailLearn(ctx: CanvasRenderingContext2D, w: number, h: number, b: Box
   const c: Box = { x: b.x, y: b.y + b.h - curveH + 8, w: b.w, h: curveH - 8 }
   const n = Math.max(200, v.history.length)
   const cp = makePlot(w, h, [0, n], [0, 1.3], { l: c.x + 40, r: w - (c.x + c.w) + 10, t: c.y + 8, b: h - (c.y + c.h) + 30 })
-  drawAxes(ctx, cp, { xTicks: [0, Math.round(n / 2), n], yTicks: [0, 0.5, 1], xLabel: 'passes over all the mangoes', yLabel: 'average cost' })
+  drawAxes(ctx, cp, { xTicks: [0, Math.round(n / 2), n], yTicks: [0, 0.5, 1], xLabel: 'passes over all the logged readings', yLabel: 'average cost' })
   if (v.history.length > 1) {
     ctx.save()
     ctx.beginPath()
@@ -600,8 +636,8 @@ function detailLearn(ctx: CanvasRenderingContext2D, w: number, h: number, b: Box
     ctx.stroke()
     ctx.restore()
     const last = v.history[v.history.length - 1]
-    label(ctx, `cost ${f2(last.loss)} · ${(last.acc * 100).toFixed(0)}% of mangoes right`, cp.right - 6, cp.top + 12, { color: '#f8fafc', mono: true, align: 'right' })
-  } else label(ctx, 'Press "Train on all the mangoes" to fill this in', cp.left + 12, (cp.top + cp.bottom) / 2, { color: '#94a3b8' })
+    label(ctx, `cost ${f2(last.loss)} · ${(last.acc * 100).toFixed(0)}% of readings right`, cp.right - 6, cp.top + 12, { color: '#f8fafc', mono: true, align: 'right' })
+  } else label(ctx, 'Press "Train on all the readings" to fill this in', cp.left + 12, (cp.top + cp.bottom) / 2, { color: '#94a3b8' })
   return pl
 }
 
@@ -609,23 +645,23 @@ function detailNew(ctx: CanvasRenderingContext2D, w: number, h: number, b: Box, 
   const foot = 54
   const pl = drawPlane(ctx, w, h, { ...b, h: b.h - foot }, v, { lines: [], regions: true, wide: true })
   const win = decode(v.pass.a2, v.sure)
-  const out = v.mango.colour < 0 || v.mango.colour > 10 || v.mango.soft < 0 || v.mango.soft > 10
+  const out = outsideData(v.reading)
   const y = b.y + b.h - foot + 26
   label(ctx, `It answers: ${win.label}, ${(win.confidence * 100).toFixed(0)}% sure`, b.x + 8, y, { color: CLASS_COLORS[win.k], size: 16, bold: true })
   label(
     ctx,
-    out ? 'This point is outside the dashed box. No training mango was anywhere near it.' : 'Inside the dashed box: among the mangoes it was trained on.',
+    out ? 'Outside the dashed box: no logged reading was anywhere near this. A working sensor would not send it.' : 'Inside the dashed box: among the readings it was trained on.',
     b.x + 8,
     y + 22,
     { color: out ? '#fda4af' : '#94a3b8', size: 11 },
   )
-  label(ctx, 'Dashed box: where every training mango lay', pl.X(0) + 6, pl.Y(10) - 9, { size: 10, color: '#e2e8f0' })
+  label(ctx, 'Dashed box: where every logged reading lay', pl.X(INPUTS[0].min) + 6, pl.Y(INPUTS[1].max) - 9, { size: 10, color: '#e2e8f0' })
   return pl
 }
 
 /**
  * Draws the whole frame: the network on one side, the current stop's detail on the other.
- * Returns the input plane's plot when one is shown, so taps on it can place the mango.
+ * Returns the input plane's plot when one is shown, so taps on it can set the reading.
  */
 export function drawJourney(ctx: CanvasRenderingContext2D, w: number, h: number, v: View): Plot | null {
   const wide = w >= 760

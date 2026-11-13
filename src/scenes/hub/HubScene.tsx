@@ -115,7 +115,7 @@ export default function HubScene() {
             className="pointer-events-auto mt-2 inline-flex flex-col rounded-md border border-teal-400/60 bg-teal-400/15 px-3.5 py-2 text-left backdrop-blur hover:bg-teal-400/25"
           >
             <span className="text-sm font-semibold text-teal-50">▶ The Journey of a Signal</span>
-            <span className="text-xs text-teal-100/80">One input followed from measurement to decision, in one class</span>
+            <span className="text-xs text-teal-100/80">One motor sensor reading followed from measurement to decision, in one class</span>
           </Link>
         </div>
         <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">

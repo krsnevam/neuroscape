@@ -1,14 +1,24 @@
 /**
- * The network behind "The Journey of a Signal": a 2-4-3 classifier that sorts mangoes into
- * Unripe, Ripe and Overripe from two measurements. It is written out longhand (no matrix
- * library) so every intermediate number the lesson shows comes straight from these functions.
+ * The network behind "The Journey of a Signal": a 2-4-3 classifier for predictive maintenance.
+ * A sensor module on a factory motor reports vibration and bearing temperature, and the network
+ * decides Healthy, Service soon or Stop now. It is written out longhand (no matrix library) so
+ * every intermediate number the lesson shows comes straight from these functions.
  *
  * Notation follows Hagan: p input, W weights, b bias, n net input, a output, s sensitivity.
  */
 export type Act = 'tansig' | 'logsig' | 'relu' | 'linear'
 
-export const CLASSES = ['Unripe', 'Ripe', 'Overripe'] as const
+export const CLASSES = ['Healthy', 'Service soon', 'Stop now'] as const
 export const HIDDEN = 4
+
+/** The two measurements, in the units the sensor reports. */
+export const INPUTS = [
+  { name: 'Vibration', short: 'vibration', unit: 'mm/s', min: 0, max: 10, step: 0.1, digits: 1, low: 'smooth', high: 'shaking hard' },
+  { name: 'Bearing temperature', short: 'temperature', unit: '°C', min: 40, max: 110, step: 0.5, digits: 1, low: 'cool', high: 'very hot' },
+] as const
+
+/** One reading from the motor: [vibration in mm/s, bearing temperature in °C]. */
+export type Reading = [number, number]
 
 export interface Net {
   W1: number[][] // HIDDEN x 2
@@ -18,11 +28,8 @@ export interface Net {
   act: Act
 }
 
-export interface Mango {
-  /** 0 = deep green, 10 = deep yellow with dark patches */
-  colour: number
-  /** 0 = rock hard, 10 = very soft */
-  soft: number
+export interface Sample {
+  x: Reading
   label: number
 }
 
@@ -44,25 +51,33 @@ export function rng(seed: number) {
   }
 }
 
-/** Encoding: a 0 to 10 measurement becomes a number from −1 to 1. */
-export const normalise = (x: number) => (x - 5) / 5
-export const encode = (colour: number, soft: number): [number, number] => [normalise(colour), normalise(soft)]
+export const midOf = (i: number) => (INPUTS[i].min + INPUTS[i].max) / 2
+export const halfOf = (i: number) => (INPUTS[i].max - INPUTS[i].min) / 2
 
-/** How a fruit seller would label a mango. Too soft or too dark: overripe. Yellow enough and yielding: ripe. */
-export function trueLabel(colour: number, soft: number) {
-  if (soft > 7 || colour > 8.5) return 2
-  if (colour >= 4 && soft >= 3) return 1
-  return 0
+/** Encoding: a measurement in its own unit becomes a number from −1 to 1 (min-max normalisation). */
+export const normalise = (i: number, value: number) => (value - midOf(i)) / halfOf(i)
+export const encode = (x: Reading): [number, number] => [normalise(0, x[0]), normalise(1, x[1])]
+/** The reverse: from the network's −1 to 1 scale back to the sensor's unit. */
+export const toUnit = (i: number, pn: number) => midOf(i) + pn * halfOf(i)
+
+/**
+ * How the plant's maintenance engineer labelled past readings. The limits are illustrative,
+ * in the spirit of vibration-severity zones: either reading far too high means stop;
+ * both comfortably low means healthy; anything between means book a service.
+ */
+export function trueLabel(x: Reading) {
+  if (x[0] > 7 || x[1] > 95) return 2
+  if (x[0] < 3.5 && x[1] < 75) return 0
+  return 1
 }
 
-/** Mangoes measured and labelled by hand. A little measurement noise blurs the borders. */
-export function makeData(count = 180, seed = 11): Mango[] {
+/** Logged readings with the engineer's label. Sensor noise blurs the borders a little. */
+export function makeData(count = 180, seed = 11): Sample[] {
   const r = rng(seed)
   const gauss = () => (r() + r() + r() + r() - 2) * 0.87
   return Array.from({ length: count }, () => {
-    const colour = r() * 10
-    const soft = r() * 10
-    return { colour, soft, label: trueLabel(colour + gauss() * 0.3, soft + gauss() * 0.3) }
+    const x: Reading = [toUnit(0, r() * 2 - 1), toUnit(1, r() * 2 - 1)]
+    return { x, label: trueLabel([x[0] + gauss() * 0.06 * halfOf(0), x[1] + gauss() * 0.06 * halfOf(1)]) }
   })
 }
 
@@ -164,11 +179,11 @@ export interface Trainer {
 
 export const createTrainer = (net: Net): Trainer => ({ net, velocity: zeroLike(net), epoch: 0, history: [] })
 
-/** One pass over all the mangoes: average the slopes, then step with momentum. */
-export function trainEpoch(tr: Trainer, data: Mango[], alpha = 0.6, gamma = 0.9) {
+/** One pass over all the logged readings: average the slopes, then step with momentum. */
+export function trainEpoch(tr: Trainer, data: Sample[], alpha = 0.6, gamma = 0.9) {
   const sum = zeroLike(tr.net)
   for (const m of data) {
-    const g = backward(tr.net, forward(tr.net, encode(m.colour, m.soft)), m.label)
+    const g = backward(tr.net, forward(tr.net, encode(m.x)), m.label)
     sum.W1.forEach((r, j) => r.forEach((_, i) => (r[i] += g.W1[j][i])))
     sum.b1.forEach((_, j) => (sum.b1[j] += g.b1[j]))
     sum.W2.forEach((r, k) => r.forEach((_, j) => (r[j] += g.W2[k][j])))
@@ -188,11 +203,11 @@ export function trainEpoch(tr: Trainer, data: Mango[], alpha = 0.6, gamma = 0.9)
   return score
 }
 
-export function evaluate(net: Net, data: Mango[]) {
+export function evaluate(net: Net, data: Sample[]) {
   let loss = 0
   let right = 0
   for (const m of data) {
-    const { a2 } = forward(net, encode(m.colour, m.soft))
+    const { a2 } = forward(net, encode(m.x))
     loss += lossOf(a2, m.label)
     if (decode(a2).k === m.label) right++
   }
@@ -200,24 +215,18 @@ export function evaluate(net: Net, data: Mango[]) {
 }
 
 /** A network trained to completion, for "skip to the trained weights". */
-export function trainedNet(data: Mango[], act: Act = 'tansig', seed = 3, epochs = 1500): Net {
+export function trainedNet(data: Sample[], act: Act = 'tansig', seed = 3, epochs = 1500): Net {
   const tr = createTrainer(randomNet(seed, act))
   for (let e = 0; e < epochs; e++) trainEpoch(tr, data)
   return tr.net
 }
 
-/** Where a hidden neuron's net input is zero: the line w₁p₁ + w₂p₂ + b = 0, as two points in 0-10 units. */
-export function boundaryLine(w: number[], b: number): [[number, number], [number, number]] | null {
-  const pts: [number, number][] = []
-  const raw = (pn: number) => pn * 5 + 5
-  if (Math.abs(w[1]) > 1e-9) {
-    for (const p1 of [-1.4, 1.4]) pts.push([raw(p1), raw((-b - w[0] * p1) / w[1])])
-  } else if (Math.abs(w[0]) > 1e-9) {
-    const p1 = -b / w[0]
-    pts.push([raw(p1), raw(-1.4)], [raw(p1), raw(1.4)])
-  } else return null
-  return [pts[0], pts[1]]
+/** Where a hidden neuron's net input is zero: the line w₁p₁ + w₂p₂ + b = 0, as two points in sensor units. */
+export function boundaryLine(w: number[], b: number): [Reading, Reading] | null {
+  if (Math.abs(w[1]) > 1e-9) return [-1.6, 1.6].map((p1): Reading => [toUnit(0, p1), toUnit(1, (-b - w[0] * p1) / w[1])]) as [Reading, Reading]
+  if (Math.abs(w[0]) > 1e-9) return [-1.6, 1.6].map((p2): Reading => [toUnit(0, -b / w[0]), toUnit(1, p2)]) as [Reading, Reading]
+  return null
 }
 
-/** True when a measurement lies outside anything the training mangoes covered. */
-export const outsideData = (colour: number, soft: number) => colour < 0 || colour > 10 || soft < 0 || soft > 10
+/** True when a reading lies outside anything the logged data covered. */
+export const outsideData = (x: Reading) => x.some((v, i) => v < INPUTS[i].min || v > INPUTS[i].max)

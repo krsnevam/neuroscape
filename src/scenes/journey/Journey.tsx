@@ -4,7 +4,7 @@ import Canvas2D, { useTicker, type Plot } from '../../ui/lab/Canvas2D'
 import { Btn, Group, Seg, Slider, Stat, Stats } from '../../ui/lab/controls'
 import { useAppStore } from '../../store/useAppStore'
 import { drawJourney } from './draw'
-import { journeyMinutes, journeyStages } from './stages'
+import { journeyCase, journeyMinutes, journeyStages } from './stages'
 import {
   actFn,
   applyStep,
@@ -15,6 +15,7 @@ import {
   encode,
   evaluate,
   forward,
+  INPUTS,
   lossOf,
   makeData,
   randomNet,
@@ -23,6 +24,7 @@ import {
   trueLabel,
   type Act,
   type Grads,
+  type Reading,
   type Trainer,
 } from './sim'
 
@@ -31,7 +33,7 @@ const vec = (a: number[]) => `[${a.map(f2).join('  ')}]`
 const MAX_EPOCHS = 1500
 
 /**
- * /journey — one mango followed from measurement to decision, then backwards through learning.
+ * /journey — one motor reading followed from sensor to decision, then backwards through learning.
  * Eight stops, each interactive, with notes for a tutor taking a class through it in one sitting.
  */
 export default function Journey() {
@@ -40,7 +42,7 @@ export default function Journey() {
   const setTutor = useAppStore((s) => s.setTutorMode)
 
   const [stage, setStage] = useState(0)
-  const [mango, setMango] = useState({ colour: 6.5, soft: 5 })
+  const [reading, setReading] = useState<Reading>([5, 82])
   const [act, setAct] = useState<Act>('tansig')
   const [focus, setFocus] = useState(0)
   const [sure, setSure] = useState(0.6)
@@ -62,9 +64,10 @@ export default function Journey() {
 
   const net = trainer.current.net
   const st = journeyStages[stage]
-  const p = encode(mango.colour, mango.soft)
+  const p = encode(reading)
   const pass = forward(net, p)
-  const seller = trueLabel(Math.max(0, Math.min(10, mango.colour)), Math.max(0, Math.min(10, mango.soft)))
+  const clampTo = (i: number, v: number) => Math.max(INPUTS[i].min, Math.min(INPUTS[i].max, v))
+  const seller = trueLabel([clampTo(0, reading[0]), clampTo(1, reading[1])])
   const target = override ?? seller
   const answer = decode(pass.a2, sure)
   const cost = lossOf(pass.a2, target)
@@ -82,8 +85,8 @@ export default function Journey() {
     [act, data, redraw],
   )
 
-  const moveMango = (m: { colour: number; soft: number }) => {
-    setMango(m)
+  const moveReading = (x: Reading) => {
+    setReading(x)
     setOverride(null)
   }
   const goto = useCallback((i: number) => setStage(Math.max(0, Math.min(journeyStages.length - 1, i))), [])
@@ -134,7 +137,7 @@ export default function Journey() {
       stage,
       net: tr.net,
       pass: forward(tr.net, p),
-      mango,
+      reading,
       target,
       focus,
       data,
@@ -146,7 +149,7 @@ export default function Journey() {
     })
   }
 
-  // tap or drag on the plane to place the mango
+  // tap or drag on the plane to set the reading
   const place = (e: PointerEvent<HTMLCanvasElement>) => {
     const pl = plane.current
     if (!pl || (e.type === 'pointermove' && e.buttons === 0)) return
@@ -155,7 +158,7 @@ export default function Journey() {
     const y = e.clientY - rect.top
     if (x < pl.left - 6 || x > pl.right + 6 || y < pl.top - 6 || y > pl.bottom + 6) return
     const clamp = (v: number, r: [number, number]) => Math.max(r[0], Math.min(r[1], v))
-    moveMango({ colour: +clamp(pl.ix(x), pl.xr).toFixed(1), soft: +clamp(pl.iy(y), pl.yr).toFixed(1) })
+    moveReading([+clamp(pl.ix(x), pl.xr).toFixed(1), +clamp(pl.iy(y), pl.yr).toFixed(1)])
   }
 
   const j = focus
@@ -163,7 +166,7 @@ export default function Journey() {
   const numbers: string[] = (() => {
     switch (st.id) {
       case 'encode':
-        return [`p₁ = (${mango.colour.toFixed(1)} − 5) / 5 = ${f2(p[0])}`, `p₂ = (${mango.soft.toFixed(1)} − 5) / 5 = ${f2(p[1])}`, `p = ${vec(p)}`]
+        return [`p₁ = (${reading[0].toFixed(1)} − 5) / 5 = ${f2(p[0])}`, `p₂ = (${reading[1].toFixed(1)} − 75) / 35 = ${f2(p[1])}`, `p = ${vec(p)}`]
       case 'weights':
         return [
           `n = w₁p₁ + w₂p₂ + b`,
@@ -210,8 +213,8 @@ export default function Journey() {
           ← Worlds
         </Link>
         <div className="min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-teal-300">One class · about {journeyMinutes} minutes</div>
-          <h1 className="truncate text-base font-semibold leading-tight text-white">The Journey of a Signal</h1>
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-teal-300">Study mode · about {journeyMinutes} minutes</div>
+          <h1 className="truncate text-base font-semibold leading-tight text-white">The Journey of a Signal: the eight stops</h1>
         </div>
         <nav className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1 sm:justify-center" aria-label="Stops on the journey">
           {journeyStages.map((s, i) => (
@@ -233,8 +236,11 @@ export default function Journey() {
           onClick={() => (playing ? setPlaying(false) : (setStage(0), setPlaying(true)))}
           className="ml-auto shrink-0 rounded-md border border-teal-400/60 bg-teal-400/15 px-2.5 py-1.5 text-xs font-medium text-teal-100 hover:bg-teal-400/25"
         >
-          {playing ? '■ Stop' : '▶ Play the journey'}
+          {playing ? '■ Stop' : '▶ Auto-walk stops 1 to 5'}
         </button>
+        <Link to="/journey" className="shrink-0 rounded-md border border-white/15 px-2.5 py-1.5 text-xs text-slate-300 hover:bg-white/10">
+          Back to the game
+        </Link>
         <button
           type="button"
           role="switch"
@@ -255,6 +261,16 @@ export default function Journey() {
         </main>
 
         <aside className="flex shrink-0 flex-col border-t border-white/10 bg-slate-950/70 lg:w-[380px] lg:overflow-y-auto lg:border-l lg:border-t-0">
+          <details className="border-b border-white/10 px-4 py-2.5 text-[13px] leading-snug text-slate-300">
+            <summary className="cursor-pointer text-xs font-semibold text-emerald-200">The industry case: {journeyCase.title}</summary>
+            <p className="mt-2">{journeyCase.story}</p>
+            <ul className="mt-2 flex list-disc flex-col gap-1 pl-4">
+              {journeyCase.facts.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-slate-400">{journeyCase.honest}</p>
+          </details>
           <div className="flex flex-col gap-3 px-4 py-3">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">
@@ -287,9 +303,9 @@ export default function Journey() {
             )}
           </div>
 
-          <Group title="The mango in your hand">
-            <Slider label="Colour: green to dark yellow" value={Math.max(0, Math.min(10, mango.colour))} min={0} max={10} step={0.1} onChange={(v) => moveMango({ ...mango, colour: v })} fmt={(v) => v.toFixed(1)} />
-            <Slider label="Softness: hard to very soft" value={Math.max(0, Math.min(10, mango.soft))} min={0} max={10} step={0.1} onChange={(v) => moveMango({ ...mango, soft: v })} fmt={(v) => v.toFixed(1)} />
+          <Group title="The reading from the motor">
+            <Slider label="Vibration" value={clampTo(0, reading[0])} min={INPUTS[0].min} max={INPUTS[0].max} step={INPUTS[0].step} onChange={(v) => moveReading([v, reading[1]])} fmt={(v) => `${v.toFixed(1)} mm/s`} />
+            <Slider label="Bearing temperature" value={clampTo(1, reading[1])} min={INPUTS[1].min} max={INPUTS[1].max} step={INPUTS[1].step} onChange={(v) => moveReading([reading[0], v])} fmt={(v) => `${v.toFixed(1)} °C`} />
             <Seg
               label="Weights in the network"
               value={weights}
@@ -301,17 +317,17 @@ export default function Journey() {
               ]}
             />
             <Stats>
-              <Stat label="A seller says" value={CLASSES[seller]} />
+              <Stat label="Engineer's log says" value={CLASSES[seller]} />
               <Stat label="Network says" value={answer.confident ? answer.label : 'Not sure'} tone={answer.k === seller && answer.confident ? 'good' : 'bad'} />
-              <Stat label="Right on all mangoes" value={`${(score.acc * 100).toFixed(0)}%`} />
+              <Stat label="Right on all readings" value={`${(score.acc * 100).toFixed(0)}%`} />
             </Stats>
           </Group>
 
           {st.id === 'weights' && (
             <Group title="Change this neuron">
               {neuronSeg}
-              <Slider label="w₁, weight on colour" value={wj[0]} min={-4} max={4} step={0.05} onChange={(v) => setWeight(0, v)} fmt={f2} />
-              <Slider label="w₂, weight on softness" value={wj[1]} min={-4} max={4} step={0.05} onChange={(v) => setWeight(1, v)} fmt={f2} />
+              <Slider label="w₁, weight on vibration" value={wj[0]} min={-4} max={4} step={0.05} onChange={(v) => setWeight(0, v)} fmt={f2} />
+              <Slider label="w₂, weight on temperature" value={wj[1]} min={-4} max={4} step={0.05} onChange={(v) => setWeight(1, v)} fmt={f2} />
               <Slider label="b, bias" value={net.b1[j]} min={-4} max={4} step={0.05} onChange={(v) => setWeight('b', v)} fmt={f2} />
             </Group>
           )}
@@ -332,7 +348,7 @@ export default function Journey() {
           )}
           {st.id === 'error' && (
             <Group title="The target">
-              <Seg label="A seller says this mango is" value={String(target)} onChange={(v) => setOverride(Number(v))} options={CLASSES.map((c, k) => ({ value: String(k), label: c }))} />
+              <Seg label="The engineer's log says" value={String(target)} onChange={(v) => setOverride(Number(v))} options={CLASSES.map((c, k) => ({ value: String(k), label: c }))} />
               <Stats>
                 <Stat label="Cost F" value={f2(cost)} tone={cost < 0.3 ? 'good' : cost > 1 ? 'bad' : 'warn'} />
                 <Stat label="Probability of the true class" value={`${(pass.a2[target] * 100).toFixed(0)}%`} />
@@ -343,10 +359,10 @@ export default function Journey() {
             <Group title="Learning">
               <div className="flex flex-wrap gap-2">
                 <Btn onClick={oneStep} disabled={training}>
-                  One step on this mango
+                  One step on this reading
                 </Btn>
                 <Btn tone="go" onClick={() => setTraining(!training)} disabled={trainer.current.epoch >= MAX_EPOCHS}>
-                  {training ? 'Pause' : 'Train on all the mangoes'}
+                  {training ? 'Pause' : 'Train on all the readings'}
                 </Btn>
                 <Btn tone="warn" onClick={() => loadWeights('random')}>
                   Start again from random weights
@@ -357,18 +373,21 @@ export default function Journey() {
               <Stats>
                 <Stat label="Passes" value={trainer.current.epoch} />
                 <Stat label="Average cost" value={f2(score.loss)} tone={score.loss < 0.3 ? 'good' : 'warn'} />
-                <Stat label="Cost on this mango" value={f2(cost)} />
+                <Stat label="Cost on this reading" value={f2(cost)} />
               </Stats>
             </Group>
           )}
           {st.id === 'new' && (
-            <Group title="Try a new mango">
+            <Group title="Send a new reading">
               <div className="flex flex-wrap gap-2">
-                <Btn onClick={() => moveMango({ colour: 6.6, soft: 5.2 })}>A good ripe one</Btn>
-                <Btn onClick={() => moveMango({ colour: 1.2, soft: 1.5 })}>Green and hard</Btn>
-                <Btn onClick={() => moveMango({ colour: 6.2, soft: 7 })}>On the border</Btn>
-                <Btn tone="warn" onClick={() => moveMango({ colour: 12.5, soft: -2.5 })}>
-                  Impossible: off both scales
+                <Btn onClick={() => moveReading([1.2, 55])}>New motor: 1.2 mm/s, 55 °C</Btn>
+                <Btn onClick={() => moveReading([5.2, 84])}>Worn bearing: 5.2 mm/s, 84 °C</Btn>
+                <Btn onClick={() => moveReading([3.5, 74])}>On a border: 3.5 mm/s, 74 °C</Btn>
+                <Btn tone="warn" onClick={() => moveReading([6.5, 20])}>
+                  Broken temperature probe: 6.5 mm/s, 20 °C
+                </Btn>
+                <Btn tone="warn" onClick={() => moveReading([12.8, 128])}>
+                  Sensor at full scale: 12.8 mm/s, 128 °C
                 </Btn>
               </div>
               {score.acc < 0.85 && (

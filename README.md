@@ -44,7 +44,7 @@ src/
 
 ## The Journey of a Signal
 
-Open `/#/journey` (or the button on the hub). One mango is followed through a 2-4-3 network in eight stops: encode, weigh, activate, layer, decode, compare, learn, new input. Every stop is interactive and every number shown is computed live by `src/scenes/journey/sim.ts`. Tutor mode adds what to say, a question for the class and the wrong idea to listen for; the whole walk is planned for one class of about 45 minutes.
+Open `/#/journey` (or the button on the hub). It opens as a game: load a motor into the sling, launch it, and the camera follows its reading through the network until the answer is fired at one of three bays. Five levels add one idea each (first flight, repair a neuron, the missing bend, teach it, do not be fooled). `/#/journey?mode=study` opens the same journey as eight stops to study in depth. It uses one industry case, predictive maintenance: a sensor reading from a factory motor (vibration in mm/s, bearing temperature in °C) is followed through a 2-4-3 network that decides Healthy, Service soon or Stop now, in eight stops: encode, weigh, activate, layer, decode, compare, learn, new input. Every stop is interactive and every number shown is computed live by `src/scenes/journey/sim.ts`. Tutor mode adds what to say, a question for the class and the wrong idea to listen for; the whole walk is planned for one class of about 45 minutes.
 
 ## World 5: the Model Factory
 

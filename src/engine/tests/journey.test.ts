@@ -19,14 +19,14 @@ import {
 describe('the journey of a signal', { timeout: 60000 }, () => {
   const data = makeData()
 
-  it('labels all three kinds of mango in the data', () => {
+  it('logs all three conditions in the data', () => {
     const counts = [0, 1, 2].map((k) => data.filter((m) => m.label === k).length)
     for (const c of counts) expect(c).toBeGreaterThan(20)
   })
 
-  it('encodes 0 to 10 as -1 to 1', () => {
-    expect(encode(0, 10)).toEqual([-1, 1])
-    expect(encode(5, 7.5)).toEqual([0, 0.5])
+  it('encodes each sensor range as -1 to 1', () => {
+    expect(encode([0, 110])).toEqual([-1, 1])
+    expect(encode([5, 92.5])).toEqual([0, 0.5])
   })
 
   it('turns scores into probabilities that sum to one and keep their order', () => {
@@ -40,7 +40,7 @@ describe('the journey of a signal', { timeout: 60000 }, () => {
   it('backpropagation matches the slope measured by nudging each weight', () => {
     for (const act of ['tansig', 'logsig', 'linear'] as const) {
       const net = randomNet(5, act)
-      const p = encode(6.2, 4.1)
+      const p = encode([6.2, 68])
       const t = 1
       const g = backward(net, forward(net, p), t)
       const h = 1e-6
@@ -60,7 +60,7 @@ describe('the journey of a signal', { timeout: 60000 }, () => {
     }
   })
 
-  it('starts out guessing and learns to sort the mangoes', () => {
+  it('starts out guessing and learns to judge the motor', () => {
     const before = evaluate(randomNet(), data)
     expect(before.acc).toBeLessThan(0.6)
     const tr = createTrainer(randomNet())
@@ -80,10 +80,10 @@ describe('the journey of a signal', { timeout: 60000 }, () => {
 
   it('gives the right answer for clear cases and stays confident far outside the data', () => {
     const net = trainedNet(data)
-    expect(decode(forward(net, encode(1.5, 1.5)).a2).label).toBe('Unripe')
-    expect(decode(forward(net, encode(6.8, 5.2)).a2).label).toBe('Ripe')
-    expect(decode(forward(net, encode(6, 9.3)).a2).label).toBe('Overripe')
-    // a measurement no mango could have still gets a confident label
-    expect(decode(forward(net, encode(25, -12)).a2).confidence).toBeGreaterThan(0.9)
+    expect(decode(forward(net, encode([1.2, 55])).a2).label).toBe('Healthy')
+    expect(decode(forward(net, encode([5, 84])).a2).label).toBe('Service soon')
+    expect(decode(forward(net, encode([8.6, 70])).a2).label).toBe('Stop now')
+    // a reading no working sensor could give still gets a confident label
+    expect(decode(forward(net, encode([12.5, 22])).a2).confidence).toBeGreaterThan(0.9)
   })
 })
