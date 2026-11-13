@@ -3,7 +3,7 @@ import type { Phase } from './gameDraw'
 
 /** The levels of the playable journey. Each one hands the player one more idea. */
 export interface Level {
-  id: 'kids' | 'first' | 'weights' | 'fix' | 'bend' | 'teach' | 'trust'
+  id: 'kids' | 'calm' | 'helpers' | 'blame' | 'first' | 'weights' | 'fix' | 'bend' | 'teach' | 'trust'
   name: string
   goal: string
   brief: string
@@ -14,10 +14,31 @@ export interface Level {
 export const levels: Level[] = [
   {
     id: 'kids',
-    name: 'Start here: two knobs',
+    name: 'Two knobs',
     goal: 'Two friends tell you about a motor. Two knobs say how much you listen to each. Learn where the knobs should be.',
     brief: 'The simplest possible network: one neuron, two weights.',
     lesson: 'A weight is how much you listen to one input. It gets its value from many small corrections after mistakes.',
+  },
+  {
+    id: 'calm',
+    name: 'A calming friend',
+    goal: 'A third friend brings good news. Learn that a knob can go below zero and that the line can move.',
+    brief: 'One neuron, three weights that may be negative, and a learnable bias.',
+    lesson: 'A negative weight makes an input count against. The bias is one more weight that learns.',
+  },
+  {
+    id: 'helpers',
+    name: 'One judge is not enough',
+    goal: 'Two probes should agree. Find out why one judge cannot check that, and what two helpers can do.',
+    brief: 'A single neuron draws one line. A hidden layer draws several, if its neurons bend.',
+    lesson: 'Hidden neurons each draw one line; the output neuron combines them; the nonlinear activation makes it possible.',
+  },
+  {
+    id: 'blame',
+    name: 'Passing the blame',
+    goal: 'Only the boss is ever corrected. See how the helpers learn anyway.',
+    brief: 'Backpropagation on a 2-2-1 network, from random weights.',
+    lesson: 'Each hidden neuron receives a share of the output error through the weight that connects it, and adjusts its own weights by that share.',
   },
   {
     id: 'first',

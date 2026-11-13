@@ -267,7 +267,7 @@ export default function KidLab({ tutor, onNext }: { tutor: boolean; onNext: () =
             <b>Look at the knobs now.</b> At the start I hardly listened to Hotty: that knob was {f1(START[1])}. Now it is {f1(knobs[1])}, and Shaky's went from {f1(START[0])} to {f1(knobs[0])}. Nobody told me to listen to the heat. My mistakes moved the knobs. <b>That is how a network gets its weights.</b>
             <div className="mt-3">
               <Btn tone="go" onClick={onNext}>
-                Now see the real network: 27 knobs →
+                Next: a friend who calms you down →
               </Btn>
             </div>
           </section>

@@ -8,6 +8,9 @@ import { burst, cameraFor, drawGame, DURATION, SLING, stepShards, toWorld, type 
 import { levels, tutorFor } from './levels'
 import WeightLab from './WeightLab'
 import KidLab from './KidLab'
+import KidCalm from './KidCalm'
+import KidHelpers from './KidHelpers'
+import KidBlame from './KidBlame'
 import {
   actFn,
   applyStep,
@@ -36,6 +39,8 @@ import {
 
 const f2 = (v: number) => (Math.abs(v) < 0.005 ? '0.00' : v.toFixed(2))
 const vec = (a: number[]) => `[${a.map(f2).join('  ')}]`
+/** Levels that have their own screen instead of the factory floor. */
+const SIMPLE = ['kids', 'calm', 'helpers', 'blame', 'weights']
 const EXPLAIN: Phase[] = ['encode', 'weigh1', 'sum', 'activate', 'weigh2', 'softmax', 'impact', 'learn']
 const ORDER: Phase[] = ['encode', 'weigh1', 'sum', 'activate', 'weigh2', 'softmax', 'shot', 'impact']
 
@@ -129,7 +134,7 @@ export default function Game() {
       if (id === 'first') {
         if (!keepNet) sc.net = cloneNet(trained)
         sc.queue = [[1.5, 55], [5.2, 84], [8.6, 72]]
-      } else if (id === 'weights' || id === 'kids') {
+      } else if (SIMPLE.includes(id)) {
         sc.net = cloneNet(trained)
         sc.queue = []
       } else if (id === 'fix') {
@@ -471,8 +476,11 @@ export default function Game() {
       </header>
 
       {level.id === 'kids' && <KidLab tutor={tutor} onNext={() => gotoLevel(levelIdx + 1)} />}
+      {level.id === 'calm' && <KidCalm tutor={tutor} onNext={() => gotoLevel(levelIdx + 1)} />}
+      {level.id === 'helpers' && <KidHelpers tutor={tutor} onNext={() => gotoLevel(levelIdx + 1)} />}
+      {level.id === 'blame' && <KidBlame tutor={tutor} onNext={() => gotoLevel(levelIdx + 1)} />}
       {level.id === 'weights' && <WeightLab data={data} trained={trained} tutor={tutor} onNext={() => gotoLevel(levelIdx + 1)} />}
-      <div className={`${level.id === 'weights' || level.id === 'kids' ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden`}>
+      <div className={`${SIMPLE.includes(level.id) ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden`}>
         <main className="relative h-[560px] shrink-0 overflow-hidden lg:h-auto lg:min-h-0 lg:flex-1">
           <Canvas2D
             draw={draw}
