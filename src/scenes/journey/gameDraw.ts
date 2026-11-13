@@ -317,6 +317,7 @@ function drawBay(ctx: CanvasRenderingContext2D, k: number, s: Scene) {
   ctx.fillStyle = '#334155'
   ctx.fillRect(x - 62, y + 46, 124, 6)
   text(ctx, CLASSES[k], x, y + 68, { size: 16, bold: true, color: CLASS_COLORS[k] })
+  text(ctx, ['keep running', 'book maintenance', 'halt the line'][k], x, y + 87, { size: 12, color: '#94a3b8' })
   if (isTruth) {
     ctx.strokeStyle = rgba('#f8fafc', 0.5 + 0.4 * Math.sin(s.t * 8))
     ctx.lineWidth = 3

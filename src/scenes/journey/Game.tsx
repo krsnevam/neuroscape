@@ -17,12 +17,15 @@ import {
   encode,
   evaluate,
   forward,
+  INPUTS,
+  LIMITS,
   makeData,
   outsideData,
   randomNet,
   trainEpoch,
   trainedNet,
   trueLabel,
+  whyLabel,
   type Act,
   type Net,
   type Reading,
@@ -46,6 +49,43 @@ function tellingQueue(data: Sample[], bad: Net, good: Net): Reading[] {
   }
   for (const m of missed) if (picks.length < 3 && !picks.includes(m)) picks.push(m)
   return [...picks, ...(fine ? [fine] : [])].map((m) => [+m.x[0].toFixed(1), +m.x[1].toFixed(1)] as Reading)
+}
+
+const ZONE = ['#4ade80', '#fbbf24', '#f87171']
+
+/** One sensor reading on its scale, with the engineer's healthy, service and stop zones marked. */
+function Gauge({ i, value }: { i: 0 | 1; value: number }) {
+  const q = INPUTS[i]
+  const pct = (v: number) => `${Math.max(0, Math.min(100, ((v - q.min) / (q.max - q.min)) * 100))}%`
+  const off = value < q.min || value > q.max
+  const zone = value > LIMITS.stop[i] ? 2 : value >= LIMITS.service[i] ? 1 : 0
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between gap-3 text-xs">
+        <span className="text-slate-300">{q.name}</span>
+        <span className="font-mono font-semibold" style={{ color: off ? '#f8fafc' : ZONE[zone] }}>
+          {value.toFixed(1)} {q.unit}
+          {off && ' · off the scale'}
+        </span>
+      </div>
+      <div className="relative h-3 w-56 overflow-hidden rounded-sm">
+        <div className="absolute inset-y-0 left-0" style={{ width: pct(LIMITS.service[i]), background: `${ZONE[0]}99` }} />
+        <div className="absolute inset-y-0" style={{ left: pct(LIMITS.service[i]), right: `calc(100% - ${pct(LIMITS.stop[i])})`, background: `${ZONE[1]}99` }} />
+        <div className="absolute inset-y-0 right-0" style={{ left: pct(LIMITS.stop[i]), background: `${ZONE[2]}99` }} />
+        <div className="absolute inset-y-0 w-1 -translate-x-1/2 bg-white" style={{ left: pct(value) }} />
+      </div>
+      <div className="relative h-3 w-56 font-mono text-[10px] text-slate-500">
+        <span className="absolute left-0">{q.min}</span>
+        <span className="absolute -translate-x-1/2" style={{ left: pct(LIMITS.service[i]) }}>
+          {LIMITS.service[i]}
+        </span>
+        <span className="absolute -translate-x-1/2" style={{ left: pct(LIMITS.stop[i]) }}>
+          {LIMITS.stop[i]}
+        </span>
+        <span className="absolute right-0">{q.max}</span>
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -299,7 +339,9 @@ export default function Game() {
       if (!next) return { title: 'All motors launched', body: '', maths: [] as string[] }
       return {
         title: 'Load the sling',
-        body: `This motor reads ${next[0].toFixed(1)} mm/s of vibration and ${next[1].toFixed(1)} °C at the bearing. Pull the sling back and let go to send that reading into the network.`,
+        body: outsideData(next)
+          ? `This reading is ${next[0].toFixed(1)} mm/s and ${next[1].toFixed(1)} °C. At least one value is off the sensor's normal scale, so the engineer's rule has no label for it. Launch it and see what the network does anyway.`
+          : `By the engineer's rule this motor is "${CLASSES[trueLabel(next)]}", because ${whyLabel(next)}. The network was never told that rule; it only saw 180 labelled readings. Launch it and see whether the network agrees.`,
         maths: [],
       }
     }
@@ -355,8 +397,8 @@ export default function Game() {
             f.truth < 0
               ? `No motor in the log ever read ${f.reading[0].toFixed(1)} mm/s at ${f.reading[1].toFixed(1)} °C. The network answered "${CLASSES[f.winner]}" all the same.`
               : f.hit
-                ? `The maintenance engineer's log also says ${CLASSES[f.truth]}. The crates come down.`
-                : `The engineer's log says ${CLASSES[f.truth]}, shown by the dashed frame. The weights sent this reading to the wrong bay.`,
+                ? `The network fired at ${CLASSES[f.winner]}, and the engineer's rule agrees: ${whyLabel(f.reading)}. The crates come down.`
+                : `The network fired at ${CLASSES[f.winner]}, but the engineer's rule says ${CLASSES[f.truth]} (dashed frame), because ${whyLabel(f.reading)}. The weights sent this reading to the wrong bay.`,
           maths: f.truth >= 0 ? [`cost F = −ln(${f2(pass.a2[f.truth])}) = ${f2(-Math.log(Math.max(1e-9, pass.a2[f.truth])))}`] : [],
         }
       default:
@@ -458,6 +500,17 @@ export default function Game() {
                 <div className="text-base font-semibold text-white">{caption.title}</div>
                 <p className="text-[13px] leading-snug text-slate-300">{caption.body}</p>
               </div>
+              {!f && next && !done && (
+                <div className="flex flex-col gap-1.5 rounded-md border border-white/15 bg-slate-900/80 px-3 py-2">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-400">This motor on the engineer's scales</div>
+                  <Gauge i={0} value={next[0]} />
+                  <Gauge i={1} value={next[1]} />
+                  <div className="text-xs text-slate-300">
+                    Engineer's label:{' '}
+                    {outsideData(next) ? <b className="text-white">none, the reading is off the scale</b> : <b style={{ color: ZONE[trueLabel(next)] }}>{CLASSES[trueLabel(next)]}</b>}
+                  </div>
+                </div>
+              )}
               {caption.maths.length > 0 && <pre className="overflow-x-auto rounded-md border border-teal-400/25 bg-teal-400/[0.07] px-2.5 py-1.5 font-mono text-[12px] leading-relaxed text-teal-50">{caption.maths.join('\n')}</pre>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -580,6 +633,24 @@ export default function Game() {
               <Btn onClick={() => (setup(levelIdx), setShots(0))}>Start again from random weights</Btn>
             </div>
           )}
+
+          <div className="rounded-md border border-white/10 bg-white/[0.03] p-2.5">
+            <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-slate-400">How a reading gets its label</div>
+            <ul className="flex flex-col gap-1.5 text-[13px] leading-snug text-slate-300">
+              <li>
+                <b style={{ color: ZONE[0] }}>Healthy</b>: vibration below {LIMITS.service[0]} mm/s <b>and</b> bearing below {LIMITS.service[1]} °C. Keep running.
+              </li>
+              <li>
+                <b style={{ color: ZONE[2] }}>Stop now</b>: vibration above {LIMITS.stop[0]} mm/s <b>or</b> bearing above {LIMITS.stop[1]} °C. Halt the line.
+              </li>
+              <li>
+                <b style={{ color: ZONE[1] }}>Service soon</b>: anything in between. Book maintenance.
+              </li>
+            </ul>
+            <p className="mt-2 text-xs leading-snug text-slate-400">
+              This is the maintenance engineer's rule. It labelled the 180 logged readings. The network is never shown the rule, only the labelled readings, and each launch tests whether its answer matches.
+            </p>
+          </div>
 
           <Stats>
             <Stat label="Right on the whole log" value={`${(score.acc * 100).toFixed(0)}%`} tone={score.acc > 0.9 ? 'good' : 'warn'} />

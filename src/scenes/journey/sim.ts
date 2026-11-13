@@ -65,10 +65,29 @@ export const toUnit = (i: number, pn: number) => midOf(i) + pn * halfOf(i)
  * in the spirit of vibration-severity zones: either reading far too high means stop;
  * both comfortably low means healthy; anything between means book a service.
  */
+export const LIMITS = { service: [3.5, 75], stop: [7, 95] } as const
+
 export function trueLabel(x: Reading) {
-  if (x[0] > 7 || x[1] > 95) return 2
-  if (x[0] < 3.5 && x[1] < 75) return 0
+  if (x[0] > LIMITS.stop[0] || x[1] > LIMITS.stop[1]) return 2
+  if (x[0] < LIMITS.service[0] && x[1] < LIMITS.service[1]) return 0
   return 1
+}
+
+/** The engineer's reason for a label, in words, so a reading can be tied to its instruction. */
+export function whyLabel(x: Reading): string {
+  const v = `${x[0].toFixed(1)} mm/s`
+  const t = `${x[1].toFixed(1)} °C`
+  const vHigh = x[0] > LIMITS.stop[0]
+  const tHigh = x[1] > LIMITS.stop[1]
+  if (vHigh && tHigh) return `vibration ${v} is above ${LIMITS.stop[0]} and the bearing at ${t} is above ${LIMITS.stop[1]}`
+  if (vHigh) return `vibration ${v} is above ${LIMITS.stop[0]} mm/s`
+  if (tHigh) return `the bearing at ${t} is above ${LIMITS.stop[1]} °C`
+  const vOk = x[0] < LIMITS.service[0]
+  const tOk = x[1] < LIMITS.service[1]
+  if (vOk && tOk) return `vibration ${v} is below ${LIMITS.service[0]} and the bearing at ${t} is below ${LIMITS.service[1]}`
+  if (!vOk && !tOk) return `vibration ${v} and the bearing at ${t} are both past the healthy limits, but neither is at the stop limit`
+  if (!vOk) return `vibration ${v} is past the healthy limit of ${LIMITS.service[0]}, but below the stop limit of ${LIMITS.stop[0]}`
+  return `the bearing at ${t} is past the healthy limit of ${LIMITS.service[1]}, but below the stop limit of ${LIMITS.stop[1]}`
 }
 
 /** Logged readings with the engineer's label. Sensor noise blurs the borders a little. */
