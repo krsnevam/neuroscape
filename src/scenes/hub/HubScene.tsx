@@ -1,7 +1,7 @@
 import { Suspense, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import type { Mesh } from 'three'
 import { worlds, type World } from '../../data/worlds'
 import { useAppStore } from '../../store/useAppStore'
@@ -110,6 +110,13 @@ export default function HubScene() {
             Neuro<span className="text-sky-400">Scape</span>
           </h1>
           <p className="text-xs text-slate-400 sm:text-sm">Walk inside neural networks. Tap a world to enter.</p>
+          <Link
+            to="/journey"
+            className="pointer-events-auto mt-2 inline-flex flex-col rounded-md border border-teal-400/60 bg-teal-400/15 px-3.5 py-2 text-left backdrop-blur hover:bg-teal-400/25"
+          >
+            <span className="text-sm font-semibold text-teal-50">▶ The Journey of a Signal</span>
+            <span className="text-xs text-teal-100/80">One input followed from measurement to decision, in one class</span>
+          </Link>
         </div>
         <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
           <FpsMeter />

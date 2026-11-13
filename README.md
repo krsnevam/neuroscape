@@ -42,6 +42,10 @@ src/
 | 7 | Worlds 3, 1, 2, 4 | |
 | 8–10 | Challenge, Teacher mode, AR, sound, badges, exam prep | |
 
+## The Journey of a Signal
+
+Open `/#/journey` (or the button on the hub). One mango is followed through a 2-4-3 network in eight stops: encode, weigh, activate, layer, decode, compare, learn, new input. Every stop is interactive and every number shown is computed live by `src/scenes/journey/sim.ts`. Tutor mode adds what to say, a question for the class and the wrong idea to listen for; the whole walk is planned for one class of about 45 minutes.
+
 ## World 5: the Model Factory
 
 Open `/#/world/factory`. Each station is built on an everyday example and follows Explore, Break, Fix, Prove. All training runs live in the browser with the engine in `src/engine`.
