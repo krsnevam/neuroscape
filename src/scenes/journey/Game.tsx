@@ -7,6 +7,7 @@ import { drawPlane, type View } from './draw'
 import { burst, cameraFor, drawGame, DURATION, SLING, stepShards, toWorld, type Flight, type Phase, type Scene } from './gameDraw'
 import { levels, tutorFor } from './levels'
 import WeightLab from './WeightLab'
+import KidLab from './KidLab'
 import {
   actFn,
   applyStep,
@@ -128,7 +129,7 @@ export default function Game() {
       if (id === 'first') {
         if (!keepNet) sc.net = cloneNet(trained)
         sc.queue = [[1.5, 55], [5.2, 84], [8.6, 72]]
-      } else if (id === 'weights') {
+      } else if (id === 'weights' || id === 'kids') {
         sc.net = cloneNet(trained)
         sc.queue = []
       } else if (id === 'fix') {
@@ -469,8 +470,9 @@ export default function Game() {
         </button>
       </header>
 
+      {level.id === 'kids' && <KidLab tutor={tutor} onNext={() => gotoLevel(levelIdx + 1)} />}
       {level.id === 'weights' && <WeightLab data={data} trained={trained} tutor={tutor} onNext={() => gotoLevel(levelIdx + 1)} />}
-      <div className={`${level.id === 'weights' ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden`}>
+      <div className={`${level.id === 'weights' || level.id === 'kids' ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden`}>
         <main className="relative h-[560px] shrink-0 overflow-hidden lg:h-auto lg:min-h-0 lg:flex-1">
           <Canvas2D
             draw={draw}

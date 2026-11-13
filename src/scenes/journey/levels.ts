@@ -3,7 +3,7 @@ import type { Phase } from './gameDraw'
 
 /** The levels of the playable journey. Each one hands the player one more idea. */
 export interface Level {
-  id: 'first' | 'weights' | 'fix' | 'bend' | 'teach' | 'trust'
+  id: 'kids' | 'first' | 'weights' | 'fix' | 'bend' | 'teach' | 'trust'
   name: string
   goal: string
   brief: string
@@ -12,6 +12,13 @@ export interface Level {
 }
 
 export const levels: Level[] = [
+  {
+    id: 'kids',
+    name: 'Start here: two knobs',
+    goal: 'Two friends tell you about a motor. Two knobs say how much you listen to each. Learn where the knobs should be.',
+    brief: 'The simplest possible network: one neuron, two weights.',
+    lesson: 'A weight is how much you listen to one input. It gets its value from many small corrections after mistakes.',
+  },
   {
     id: 'first',
     name: 'First flight',
