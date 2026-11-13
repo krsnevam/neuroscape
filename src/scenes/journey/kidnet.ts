@@ -78,3 +78,17 @@ export function scoreKid(net: KidNet) {
 
 /** A helper's line on the 0-10 map: where its worry is exactly half. Returned as wA·A + wB·B = k. */
 export const helperLine = (net: KidNet, j: number) => ({ wa: net.W[j][0] / 5, wb: net.W[j][1] / 5, k: net.W[j][0] + net.W[j][1] - net.b[j] })
+
+/**
+ * The same puzzle at its simplest: each probe only says COLD (0) or HOT (10).
+ * Four cases in all. STOP when the two probes say different things.
+ */
+export const CASES: { a: number; b: number; name: string }[] = [
+  { a: 0, b: 0, name: 'Both cold' },
+  { a: 10, b: 10, name: 'Both hot' },
+  { a: 10, b: 0, name: 'A hot, B cold' },
+  { a: 0, b: 10, name: 'A cold, B hot' },
+]
+
+/** How many of the four cases the network gets right. */
+export const scoreCases = (net: KidNet) => CASES.filter((c) => forwardKid(net, c.a, c.b).out > 0.5 === disagree(c.a, c.b)).length
